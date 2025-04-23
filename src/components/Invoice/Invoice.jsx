@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FaImage } from "react-icons/fa6";
-import { useNavigate } from "react-router-dom";
+import { FaFileInvoice, FaImage, FaTrash } from "react-icons/fa6";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./Invoice.css";
 import {
   FaMinusCircle,
@@ -9,6 +9,7 @@ import {
   FaBars,
   FaTimesCircle,
   FaSearch,
+  FaEdit,
 } from "react-icons/fa";
 // import { AiOutlineBars } from "react-icons/ai";
 import { IoMdCloseCircle } from "react-icons/io";
@@ -16,6 +17,7 @@ import Header from "../header/Header";
 import { fetchProducts, removeProduct } from "../../api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { IoClose } from "react-icons/io5";
 
 const toastOptions = {
   position: "bottom-right",
@@ -34,8 +36,37 @@ const Invoice = () => {
   const [selectedVariety, setSelectedVariety] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCategoryVisible, setIsCategoryVisible] = useState(false);
+  // Initialize kotCount based on existing localStorage entries
+  const [kotCount, setKotCount] = useState(() => {
+    const existing = JSON.parse(localStorage.getItem("kot data")) || [];
+    return existing.length;
+  });
+
+  // State for modal visibility and data
+  const [showKotModal, setShowKotModal] = useState(false);
+  const [kotDataList, setKotDataList] = useState([]);
+  const [now, setNow] = useState(Date.now());
 
   const navigate = useNavigate(); // For navigation
+
+  // Update `now` every second for countdown
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Format milliseconds to HH:mm:ss
+  const formatRemaining = (ms) => {
+    if (ms <= 0) return "00:00:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
+      2,
+      "0"
+    );
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  };
 
   const [showRemoveBtn, setShowRemoveBtn] = useState(false);
   let pressTimer;
@@ -69,6 +100,16 @@ const Invoice = () => {
 
       return acc;
     }, {});
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const fromCustomerDetail = location.state?.from === "customer-detail";
+    if (fromCustomerDetail) {
+      localStorage.removeItem("productsToSend");
+      setProductsToSend([]);
+    }
+  }, [location]);
 
   // Load products from localStorage on component mount
   useEffect(() => {
@@ -358,7 +399,24 @@ const Invoice = () => {
 
   // New: KOT (Kitchen Order Ticket) print handler
   const handleKot = () => {
-    // Identify the printable section by ID
+    // Retrieve existing KOT data array or initialize
+    const existingKot = JSON.parse(localStorage.getItem("kot data")) || [];
+    // Append current order snapshot
+    const kotEntry = {
+      timestamp: Date.now(),
+      date: new Date().toLocaleString(),
+      items: productsToSend,
+    };
+    existingKot.push(kotEntry); // Save back to localStorage
+    localStorage.setItem("kot data", JSON.stringify(existingKot));
+
+    // Clear current productsToSend
+    setProductsToSend([]);
+    localStorage.setItem("productsToSend", JSON.stringify([]));
+
+    // Update kotCount for next order
+    setKotCount(existingKot.length);
+
     const printArea = document.getElementById("sample-section");
     if (!printArea) {
       console.warn("No sample-section found to print.");
@@ -366,14 +424,73 @@ const Invoice = () => {
     }
     // Open new window and write content
     const printContent = printArea.innerHTML;
-    const win = window.open("", "_blank");
+    const win = window.open("", "", "width=600,height=400");
+    const style = `<style>
+  @page { size: 48mm auto; margin:0; }
+  @media print {
+    body{ width:48mm; margin:0; padding:4mm; font-size:1rem; }
+    .product-item{ display:flex; justify-content:space-between; margin-bottom:1rem;}
+    .hr{ border:none; border-bottom:1px solid #000; margin:2px 0;}
+    .invoice-btn{ display:none; }
+  }
+</style>`;
+
     win.document.write(
-      `<html><head><title>KOT Ticket</title><style>body{font-family:sans-serif;padding:1rem;} .product-item{margin-bottom:.5rem;} .hr{border:1px solid #000;}</style></head><body>${printContent}</body></html>`
+      `<html>
+      <head>
+      <title>KOT Ticket</title>
+     ${style}
+        </head>
+        <body>
+        ${printContent}
+        </body>
+        </html>`
     );
     win.document.close();
-    // win.focus();
-    // win.print();
-    // win.close();
+    win.focus();
+    win.print();
+    win.close();
+  };
+
+  // Open modal to show all KOT entries
+  const handleOpenKotModal = () => {
+    const existingKot = JSON.parse(localStorage.getItem("kot data")) || [];
+    const now = Date.now();
+    const validEntries = existingKot.filter(
+      (kot) => now - kot.timestamp < 2 * 60 * 60 * 1000
+    );
+    // save back filtered list
+    localStorage.setItem("kot data", JSON.stringify(validEntries));
+    setKotDataList(existingKot);
+    setShowKotModal(true);
+  };
+
+  const handleCreateInvoice = (orderItems) => {
+    // Save selected KOT order to productsToSend and navigate
+    localStorage.setItem("productsToSend", JSON.stringify(orderItems));
+    navigate("/customer-detail");
+    setShowKotModal(false);
+  };
+
+  const deleteKot = (idx) => {
+    const existingKot = [...kotDataList];
+    existingKot.splice(idx, 1);
+    localStorage.setItem("kot data", JSON.stringify(existingKot));
+    setKotDataList(existingKot);
+    setKotCount(existingKot.length);
+  };
+
+  // Edit KOT: load into current and close modal
+  const editKot = (order, idx) => {
+    const updatedKotList = [...kotDataList];
+    updatedKotList.splice(idx, 1);
+    localStorage.setItem("kot data", JSON.stringify(updatedKotList));
+    setKotDataList(updatedKotList);
+    setKotCount(updatedKotList.length);
+
+    setProductsToSend(order);
+    localStorage.setItem("productsToSend", JSON.stringify(order));
+    setShowKotModal(false);
   };
 
   return (
@@ -544,10 +661,10 @@ const Invoice = () => {
         </div>
 
         {productsToSend.length > 0 ? (
-          <div className="sample-section" id="sample-section">
+          <div className="sample-section">
             <div className="check-container">
               <>
-                <ul className="product-list">
+                <ul className="product-list" id="sample-section">
                   {/* <div style={{ textAlign: "center" }}>{dash}</div> */}
                   <hr className="hr" />
                   <li className="product-item" style={{ display: "flex" }}>
@@ -588,7 +705,7 @@ const Invoice = () => {
                         <span>x</span>
                       </div>{" "}
                       <div style={{ width: "15%", textAlign: "right" }}>
-                        <span>{product.price}</span>
+                        <span>{product.price * product.quantity}</span>
                       </div>
                     </li>
                   ))}
@@ -626,6 +743,13 @@ const Invoice = () => {
                   {/* <div style={{ textAlign: "center" }}>{dash}</div> */}
                   <hr className="hr" />
                 </ul>
+                <button
+                  onClick={handleKot}
+                  className="invoice-next-btn"
+                  style={{ borderRadius: "0" }}
+                >
+                  <h2> Print Kot </h2>
+                </button>
               </>
             </div>
           </div>
@@ -644,18 +768,76 @@ const Invoice = () => {
         </button>
 
         <button
-          onClick={handleKot}
+          onClick={handleOpenKotModal}
           className="invoice-next-btn"
-          style={{ borderRadius: "0" }}
         >
-          <h2> Kot </h2>
+          <h2> Pending Bills {kotCount}</h2>
         </button>
 
-        <button onClick={handleDone} className="invoice-next-btn">
+        {/* <button onClick={handleDone} className="invoice-next-btn">
           <h2> NEXT ₹{calculateTotalPrice(productsToSend).toFixed(2)}</h2>
-          {/* <FaArrowRight className="Invoice-arrow" /> */}
-        </button>
+        </button> */}
+        {/* KOT Modal */}
       </div>
+      {showKotModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Pending Bills</h3>
+            <button
+              className="close-btn"
+              onClick={() => setShowKotModal(false)}
+            >
+              <IoClose />
+            </button>
+            <div className="kot-list">
+              {kotDataList.length === 0 && <p>No KOT data found.</p>}
+              {kotDataList.map((order, idx) => {
+                const remaining = 2 * 60 * 60 * 1000 - (now - order.timestamp);
+                return (
+                  <div key={idx} className="kot-entry">
+                    <h4 className="kot-timer">
+                      Bill Expire in <span>{formatRemaining(remaining)}</span>
+                    </h4>
+                    <h4>
+                      KOT #{idx + 1}
+                      <span className="kot-date">{order.date}</span>
+                    </h4>
+                    <ul>
+                      {order.items.map((item, i) => (
+                        <>
+                          <li key={i} className="kot-product-item">
+                            <span>
+                              {item.name} x {item.quantity}
+                            </span>
+                            <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                          </li>
+                        </>
+                      ))}
+                    </ul>
+                    <div className="kot-entry-actions">
+                      <FaTrash
+                        className="del-action-icon action-icon"
+                        size={20}
+                        onClick={() => deleteKot(idx)}
+                      />
+                      <FaEdit
+                        className="edit-action-icon action-icon"
+                        size={20}
+                        onClick={() => editKot(order.items, idx)}
+                      />
+                      <FaFileInvoice
+                        className="invoice-action-icon action-icon"
+                        size={20}
+                        onClick={() => handleCreateInvoice(order.items)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       {showPopup && currentProduct && currentProduct.varieties?.length > 0 && (
         <div className="popup-overlay">
           <div className="popup-contentt">

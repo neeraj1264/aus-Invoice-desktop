@@ -370,17 +370,6 @@ const NewProduct = ({ setSelectedProducts }) => {
       </button>
       </div>
 
-      <div className="create-invoice-btn"  onClick={()=>{navigate("/invoice")}}>
-
-        <button className="invoice-next-btn">
-          <h2>
-            {" "}
-            CREATE INVOICE
-          </h2>
-          {/* <FaArrowRight className="Invoice-arrow" /> */}
-        </button>
-      </div>
-
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup-content">

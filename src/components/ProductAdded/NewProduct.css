@@ -16,7 +16,7 @@ border-radius: 0 0 1rem 1rem;
 box-shadow: 2px 2px 6px 2px black;
 }
 .catologue-input-fields {
-margin: 4rem 1rem;
+margin: 8rem;
 display: flex;
 flex-direction: column;
 background: white;
@@ -29,6 +29,7 @@ font-size: 1.5rem; /* 2xl */
 font-weight: bold;
 margin-bottom: 1.5rem; /* mb-6 */
 color: #1f2937; /* text-gray-800 */
+text-align: center;
 }
 .toggle-variety{
 margin: auto;

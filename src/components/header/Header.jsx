@@ -123,19 +123,7 @@ const Header = ({ headerName, setSearch, onClick }) => {
                 }
                 to="/customer-data"
               >
-                 Data
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                className={({ isActive }) =>
-                  isActive
-                    ? "nav-link custom-text active"
-                    : "nav-link custom-text"
-                }
-                to="/customer-detail"
-              >
-                Customer Detail
+                Customer Data
               </NavLink>
             </li>
             <li className="nav-item">

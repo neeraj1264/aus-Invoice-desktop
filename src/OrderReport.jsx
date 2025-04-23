@@ -255,7 +255,7 @@ const OrderReport = () => {
   return (
     <>
       <Header />
-      <div style={{ textAlign: "center", margin: "4rem auto 2rem" }}>
+      <div style={{ textAlign: "center", margin: "4rem 20rem 2rem" }}>
         {loading ? (
           <div className="lds-ripple">
             <div></div>

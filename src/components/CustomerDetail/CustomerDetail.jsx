@@ -1,6 +1,6 @@
 // CustomerDetail.js
 import React, { useState, useEffect, useRef } from "react";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaCloudDownloadAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { handleScreenshot } from "../Utils/DownloadPng"; // Import the function
 import "./Customer.css";
@@ -9,6 +9,8 @@ import Header from "../header/Header";
 import { sendorder, setdata, fetchcustomerdata } from "../../api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaWhatsapp } from "react-icons/fa6";
+import { IoPrint } from "react-icons/io5";
 
 const toastOptions = {
   position: "bottom-right",
@@ -348,127 +350,6 @@ const CustomerDetail = () => {
     }
   };
 
-  const handleRawBTPrint = () => {
-    const hasDeliveryCharge = getdeliverycharge !== 0; // Check if delivery charge exists
-
-    const orderWidth = 2;
-    const nameWidth = 16; // Set a fixed width for product name
-    const priceWidth = 4; // Set a fixed width for price
-    const quantityWidth = 2; // Set a fixed width for quantity
-
-    // Helper function to break a product name into multiple lines if needed
-    const breakProductName = (name, maxLength) => {
-      const lines = [];
-      while (name.length > maxLength) {
-        lines.push(name.substring(0, maxLength)); // Add a line of the name
-        name = name.substring(maxLength); // Remove the part that has been used
-      }
-      lines.push(name); // Add the last remaining part of the name
-      return lines;
-    };
-
-    // Map product details into a formatted string with borders
-    const productDetails = productsToSend
-      .map((product, index) => {
-        const orderNumber = `${index + 1}`.padStart(orderWidth, " "); // Format the order number
-        const productSize = product.size ? `(${product.size})` : "";
-
-        // Break the product name into multiple lines if it exceeds the fixed width
-        const nameLines = breakProductName(
-          product.name + " " + productSize,
-          nameWidth
-        );
-
-        // Format the price and quantity with proper padding
-        const paddedPrice = `${product.price}`.padStart(priceWidth, " "); // Pad price to the left
-        const paddedQuantity = `${product.quantity}`.padStart(
-          quantityWidth,
-          " "
-        ); // Pad quantity to the left
-
-        // Combine name lines with the proper padding for price and quantity
-        const productText = nameLines
-          .map((line, index) => {
-            if (index === 0) {
-              return `${orderNumber}. ${line.padEnd(
-                nameWidth,
-                " "
-              )} ${paddedQuantity} x ${paddedPrice} `;
-            } else {
-              return `    ${line.padEnd(nameWidth, " ")} ${"".padEnd(
-                priceWidth,
-                " "
-              )} ${"".padEnd(quantityWidth, " ")} `;
-            }
-          })
-          .join(""); // Join the product name lines with a newline
-
-        return productText;
-      })
-      .join("\n");
-
-    // Add a border for the header
-    const header = ` No    Item Name     Qty  price `;
-    const separator = `+${"-".repeat(nameWidth + 2)}+${"-".repeat(
-      priceWidth + 2
-    )}+${"-".repeat(quantityWidth + 2)}+`;
-    const dash = `--------------------------------`;
-    const totalprice = `${calculateTotalPrice(productsToSend)}`.padStart(
-      priceWidth,
-      " "
-    );
-    const delivery = `${getdeliverycharge}`.padStart(priceWidth, " ");
-    // Combine header, separator, and product details
-    const detailedItems = `\n${dash}\n${header}\n${dash}\n${productDetails}\n${dash}`;
-
-    const invoiceText = `
-  \x1B\x61\x01  Pehowa, Haryana, 136128\x1B\x61\x00
-  \x1B\x61\x01  Phone: +91 81689-01827\x1B\x61\x00
-
-  \x1B\x61\x01Lal Dawara Mandir Wali Gali,\x0ANear Body Fine Gym Ambala \x0A   Road Pehowa.\x1B\x61\x00
-
-  \x1B\x21\x10-----Invoice Details-----\x1B\x21\x00
-  
-  Bill No: #${Math.floor(1000 + Math.random() * 9000)}
-  Date: ${
-    new Date().toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }) +
-    " " +
-    new Date().toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true, // Enables 12-hour format
-    })
-  }
-  Customer: ${customerName || "Guest Customer"}
-  Phone: ${customerPhone || "N/A"}
-  Address: ${customerAddress || "N/A"}  
-  ${detailedItems}
-  ${hasDeliveryCharge ? `           Item Total:  ${totalprice} ` : " "}
-  ${hasDeliveryCharge ? `       Service Charge:  ${delivery}\n${dash}` : " "}
-\x1B\x21\x30\x1B\x34Total: Rs ${
-      calculateTotalPrice(productsToSend) + getdeliverycharge
-    }/-\x1B\x21\x00\x1B\x35
-
-    Thank You Visit Again!
-  ---------------------------
-  
-       Powered by BillZo
-       
-  `;
-
-    // Send the content to RawBT (add more parameters if required)
-    const encodedText = encodeURIComponent(invoiceText);
-    const rawBTUrl = `intent:${encodedText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-
-    // Trigger RawBT
-    window.location.href = rawBTUrl;
-  };
-
   const getdeliverycharge = localStorage.getItem("deliveryCharge")
     ? parseFloat(localStorage.getItem("deliveryCharge"))
     : 0; // Default to 0 if not set
@@ -549,22 +430,25 @@ const CustomerDetail = () => {
         ref={invoiceRef}
         style={{ display: "none" }}
       >
-        <img src="/logo.png" alt="Logo" width={150} className="logo" />
+        <img src="/logo3.png" alt="Logo" width={150} className="logo" />
         {/* <h1 style={{ textAlign: "center", margin: 0, fontSize: "25px" }}>
           Urban Pizzeria
         </h1> */}
         <p
           style={{
             textAlign: "center",
-            margin: 0,
+            marginTop: "1rem",
             fontSize: "14px",
             padding: "0 2px",
           }}
         >
-          Lal Dawara Mandir Wali Gali, Near Body Fine Gym Ambala Road Pehowa.
+          Ambarsari Farm, Kurukshetra Road Pehowa, (136-128)
         </p>
         <p style={{ textAlign: "center", margin: 0, fontSize: "14px" }}>
-          +91 81689-01827
+          +91 74043-39777
+        </p>
+        <p style={{ textAlign: "center", margin: 0, fontSize: "14px" }}>
+          +91 74043-38777
         </p>
         <hr />
         <h2 style={{ textAlign: "center", margin: 0, fontSize: "20px" }}>
@@ -667,15 +551,6 @@ const CustomerDetail = () => {
             ) + getdeliverycharge
           ).toFixed(2)}
         </p>{" "}
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: "15px",
-            paddingBottom: "2rem",
-          }}
-        >
-          Thank You Visit Again!
-        </div>
         <hr />
         <div
           style={{
@@ -692,11 +567,22 @@ const CustomerDetail = () => {
           alt="QR Code"
           style={{ display: "flex", margin: "2px auto" }}
         />
+         <div
+          style={{
+            textAlign: "center",
+            fontSize: "15px",
+            padding: "2rem 0",
+          }}
+        >
+          Thank You Visit Again!
+        </div>
+<hr/>
+<hr/>
       </div>
       <div className="invoice-btn">
         <button
           onClick={() => {
-            navigate("/invoice");
+            navigate("/invoice", { state: { from: "customer-detail" } });
           }}
           className="invoice-kot-btn"
         >
@@ -712,18 +598,18 @@ const CustomerDetail = () => {
       {showPopup && (
         <div style={styles.popupOverlay}>
           <div style={styles.popupContent}>
-            <h2>Select Action</h2>
+            <h2> Action</h2>
             <button onClick={handleSendToWhatsApp} style={styles.popupButton}>
-              Send to WhatsApp
+              <FaWhatsapp style={{ fontSize: "1.5rem" }} />{" "}
+              <span style={{ marginLeft: "1rem" }}>WhatsApp</span>
             </button>
             <button onClick={handlePngDownload} style={styles.popupButton}>
-              Download Invoice
-            </button>
-            <button onClick={handleRawBTPrint} style={styles.popupButton}>
-              Mobile Print
+              <FaCloudDownloadAlt style={{ fontSize: "1.5rem" }} />
+              <span style={{ marginLeft: "1rem" }}>Download</span>
             </button>
             <button onClick={MobilePrint} style={styles.popupButton}>
-              Usb Print
+              <IoPrint style={{ fontSize: "1.5rem" }} />{" "}
+              <span style={{ marginLeft: "1rem" }}>Print</span>
             </button>
 
             <button onClick={handleClosePopup} style={styles.popupCloseButton}>
@@ -743,10 +629,12 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backdropFilter: "blur(4px)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 2000, // ✅ Added here
   },
   popupContent: {
     backgroundColor: "#fff",
@@ -755,7 +643,7 @@ const styles = {
     textAlign: "center",
   },
   popupButton: {
-    display: "block",
+    display: "flex",
     width: "100%",
     margin: "10px 0",
     padding: "10px",
