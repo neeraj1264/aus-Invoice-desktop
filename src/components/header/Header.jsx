@@ -139,7 +139,7 @@ const Header = ({ headerName, setSearch, onClick }) => {
               </NavLink>
             </li>
           </ul>
-          <form className="d-flex-search" role="search">
+          <form className="d-flex-search" role="search" style={{width: "30%"}}>
             <input
               className="form-control me-2"
               type="search"

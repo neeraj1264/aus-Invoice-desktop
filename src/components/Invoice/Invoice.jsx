@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { FaFileInvoice, FaImage, FaTrash } from "react-icons/fa6";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Invoice.css";
@@ -36,6 +36,8 @@ const Invoice = () => {
   const [selectedVariety, setSelectedVariety] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCategoryVisible, setIsCategoryVisible] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("");
+
   // Initialize kotCount based on existing localStorage entries
   const [kotCount, setKotCount] = useState(() => {
     const existing = JSON.parse(localStorage.getItem("kot data")) || [];
@@ -102,6 +104,43 @@ const Invoice = () => {
     }, {});
 
   const location = useLocation();
+
+  // memoize sorted category list for consistency
+  const categories = useMemo(
+    () => Object.keys(filteredProducts).sort((a, b) => a.localeCompare(b)),
+    [filteredProducts]
+  );
+
+ // initialize activeCategory when filteredProducts first load
+ useEffect(() => {
+  if (categories.length) setActiveCategory(categories[0]);
+}, [categories]);
+
+// improved scroll‐spy
+useEffect(() => {
+  const offset = 7 * 24; // px
+
+  const onScroll = () => {
+    // build array of {cat, distance} pairs
+    const distances = categories.map((cat) => {
+      const el = document.getElementById(cat);
+      const top = el ? el.getBoundingClientRect().top : Infinity;
+      return { cat, distance: top - offset };
+    });
+
+    // filter for those “above” the offset, then pick the one closest to it
+    const inView = distances
+      .filter((d) => d.distance <= 0)
+      .sort((a, b) => b.distance - a.distance);
+
+    setActiveCategory(inView[0]?.cat ?? categories[0]);
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll(); // run once on mount
+  return () => window.removeEventListener("scroll", onScroll);
+}, [categories]);
+  
 
   useEffect(() => {
     const fromCustomerDetail = location.state?.from === "customer-detail";
@@ -391,6 +430,8 @@ const Invoice = () => {
       });
     }
     setIsCategoryVisible((prev) => !prev);
+
+    setActiveCategory(category);
   };
 
   const toggleCategoryVisibility = () => {
@@ -510,7 +551,9 @@ const Invoice = () => {
                 .map((category, index) => (
                   <button
                     key={index}
-                    className="category-btn"
+                    className={`category-btn ${
+                      activeCategory === category ? "active" : ""
+                    }`}
                     onClick={() => handleCategoryClick(category)} // Trigger scroll to category
                   >
                     {category}
@@ -767,10 +810,7 @@ const Invoice = () => {
           <h2> + PRODUCT </h2>
         </button>
 
-        <button
-          onClick={handleOpenKotModal}
-          className="invoice-next-btn"
-        >
+        <button onClick={handleOpenKotModal} className="invoice-next-btn">
           <h2> Pending Bills {kotCount}</h2>
         </button>
 
@@ -809,7 +849,9 @@ const Invoice = () => {
                             <span>
                               {item.name} x {item.quantity}
                             </span>
-                            <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                            <span>
+                              ₹{(item.price * item.quantity).toFixed(2)}
+                            </span>
                           </li>
                         </>
                       ))}
