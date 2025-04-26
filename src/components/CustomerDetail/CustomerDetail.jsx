@@ -256,8 +256,6 @@ const CustomerDetail = () => {
   const MobilePrint = async () => {
     try {
       // Convert both logo and QR code to Base64
-      const logoBase64 = await convertImageToBase64("/logo.png");
-      const qrBase64 = await convertImageToBase64("/qr.png");
 
       const kotContent = document.getElementById("mobileinvoice").innerHTML;
 
