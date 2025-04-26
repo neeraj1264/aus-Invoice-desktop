@@ -33,10 +33,10 @@ const Header = ({ headerName, setSearch, onClick }) => {
     e.preventDefault();
     if (isChecking) return;
     setIsChecking(true);
-    
+
     // Get fresh status on click
     const currentStatus = await checkBackend();
-    
+
     if (currentStatus) {
       navigate("/NewProduct");
     } else {
@@ -49,10 +49,10 @@ const Header = ({ headerName, setSearch, onClick }) => {
     e.preventDefault();
     if (isChecking) return;
     setIsChecking(true);
-    
+
     // Get fresh status on click
     const currentStatus = await checkBackend();
-    
+
     if (currentStatus) {
       navigate("/report");
     } else {
@@ -61,12 +61,27 @@ const Header = ({ headerName, setSearch, onClick }) => {
     setIsChecking(false);
   };
 
+  const guardcustomerdata = async (e) => {
+    e.preventDefault();
+    if (isChecking) return;
+    setIsChecking(true);
+
+    // Get fresh status on click
+    const currentStatus = await checkBackend();
+
+    if (currentStatus) {
+      navigate("/customer-data");
+    } else {
+      alert("You’re offline—cannot see the customer data.");
+    }
+    setIsChecking(false);
+  };
 
   return (
     <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
       <div className="container-fluid">
         <NavLink
-        onClick={onClick}
+          onClick={onClick}
           className={({ isActive }) =>
             isActive ? "navbar-brand active" : "navbar-brand"
           }
@@ -89,7 +104,7 @@ const Header = ({ headerName, setSearch, onClick }) => {
           </form>
         )}
         <button
-         ref={toggleButtonRef}
+          ref={toggleButtonRef}
           className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
@@ -160,6 +175,7 @@ const Header = ({ headerName, setSearch, onClick }) => {
                     : "nav-link custom-text"
                 }
                 to="/customer-data"
+                onClick={guardcustomerdata}
               >
                 Customer Data
               </NavLink>
@@ -177,7 +193,11 @@ const Header = ({ headerName, setSearch, onClick }) => {
               </NavLink>
             </li>
           </ul>
-          <form className="d-flex-search" role="search" style={{width: "30%"}}>
+          <form
+            className="d-flex-search"
+            role="search"
+            style={{ width: "30%" }}
+          >
             <input
               className="form-control me-2"
               type="search"
@@ -185,7 +205,7 @@ const Header = ({ headerName, setSearch, onClick }) => {
               id="all-search"
               aria-label="Search"
               onChange={handleSearchChange}
-              onKeyDown={handleKeyDown} 
+              onKeyDown={handleKeyDown}
             />
             {/* <button className="btn btn-outline-success" type="submit">Search</button> */}
             {/* <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search"/> */}
