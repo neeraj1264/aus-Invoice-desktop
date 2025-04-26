@@ -638,3 +638,15 @@ input[type="checkbox"] {
 .kot-timer span{
   color: red;
 }
+
+/* Non-veg category styling */
+.category-btn.non-veg {
+  background-color: #c0646d;
+  color: white;
+  border: 1px solid #ffcdd2; 
+}
+
+.category-btn.non-veg.active {
+  background-color: #ff0026; 
+  font-weight: bold;
+}

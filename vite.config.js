@@ -7,6 +7,6 @@ export default defineConfig({
   ],
   server: {
     host: true,  // Allow access from other devices (mobile) on the same network
-    port: 3000,  // Specify the port if needed
+    port: 3001,  // Specify the port if needed
   },
 });

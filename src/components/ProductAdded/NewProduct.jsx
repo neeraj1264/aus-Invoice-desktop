@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./NewProduct.css";
 import { fetchCategories, addCategory, addProduct } from "../../api";
 import Header from "../header/Header";
+import { addItem, getAll, saveItems } from "../../DB";
 
 const toastOptions = {
   position: "bottom-right",
@@ -43,9 +44,11 @@ const NewProduct = ({ setSelectedProducts }) => {
         // Update state and save categories to localStorage
         const categoryNames = savedCategories.map((category) => category.name);
         setCategories(categoryNames);
+        await saveItems('categories', savedCategories.map((n,i)=>({id:i,name:n}))); // adapt shape
         localStorage.setItem("categories", JSON.stringify(categoryNames));
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+      } catch {
+        const offline = await getAll('categories');
+        setCategories(offline.map(c=>c.name));
       }
     };
 
@@ -203,7 +206,8 @@ const NewProduct = ({ setSelectedProducts }) => {
       // Add the product to the localStorage
       storedProducts.push(productWithId);
       localStorage.setItem("products", JSON.stringify(storedProducts));
-  
+      await addItem('products', product);
+      // toast.success('Saved offline');
       // Reset the form fields
       setProduct({
         id: "",

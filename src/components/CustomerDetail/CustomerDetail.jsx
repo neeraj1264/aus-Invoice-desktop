@@ -11,10 +11,11 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaWhatsapp } from "react-icons/fa6";
 import { IoPrint } from "react-icons/io5";
+import { addItem, getAll, saveItems } from "../../DB";
 
 const toastOptions = {
   position: "bottom-right",
-  autoClose: 2000,
+  autoClose: 5000,
   pauseOnHover: true,
   draggable: true,
   theme: "dark",
@@ -59,8 +60,10 @@ const CustomerDetail = () => {
           ? response
           : response.data || [];
         setSavedCustomers(customersArray);
-      } catch (error) {
-        console.error("Error fetching customer data:", error.message);
+        // await saveItems('customers', customersArray);
+      } catch {
+        const offline = await getAll('customers');
+        setSavedCustomers(offline);
         const localStorageCustomers =
           JSON.parse(localStorage.getItem("customers")) || [];
         if (localStorageCustomers.length > 0) {
@@ -69,6 +72,15 @@ const CustomerDetail = () => {
       }
     };
     fetchData();
+  }, []);
+
+   // Load orders from IDB for history
+   useEffect(() => {
+    const load = async () => {
+      const offline = await getAll('orders');
+      setOrders(offline);
+    };
+    load();
   }, []);
 
   // Update suggestions based on current phone input (prefix match)
@@ -94,7 +106,7 @@ const CustomerDetail = () => {
   };
 
   const handleSendToWhatsApp = () => {
-    const restaurantName = "Urban Pizzeria";
+    const restaurantName = "Australian Bite";
 
     const currentTotalAmount =
       calculateTotalPrice(productsToSend) + deliveryChargeAmount;
@@ -175,6 +187,7 @@ const CustomerDetail = () => {
       timestamp: new Date().toISOString(),
     };
 
+
     const customerDataObject = {
       id: orderId,
       name: customerName,
@@ -183,42 +196,26 @@ const CustomerDetail = () => {
       timestamp: new Date().toISOString(),
     };
 
-    // Get the current orders from localStorage
-    const savedOrders = JSON.parse(localStorage.getItem("orders")) || [];
-
-    // Add the new order to the list
-    savedOrders.push(order);
-
-    // Save the updated orders back to localStorage
-    localStorage.setItem("orders", JSON.stringify(savedOrders));
-
-    try {
-      // Send the order to your backend to be saved in MongoDB
-      const data = await sendorder(order);
-      console.log("Order created:", data);
-
-      // You can clear localStorage or perform any other actions as needed
-      // localStorage.removeItem("products"); // Example
-    } catch (error) {
-      console.error("Error sending order:", error.message);
+    if (!navigator.onLine) {
+      // OFFLINE: just queue for later
+      await addItem("orders", order);
+      await addItem("customers", customerDataObject);
+      toast.info("You’re offline — order is saved locally ", toastOptions);
+      setShowPopup(false);
+      navigate("/invoice");
+      return;
     }
-
-    try {
-      const customerDataResponse = await setdata(customerDataObject);
-      if (
-        customerDataResponse.message ===
-        "Customer already exists, no changes made."
-      ) {
-        console.log(
-          "Customer already exists in the database, no need to add again."
-        );
-      } else {
-        console.log("Customer Data Added", customerDataResponse);
-      }
-    } catch (error) {
-      console.error("Error sending customer data:", error.message);
-    }
-  };
+  // ONLINE: send immediately
+  setShowPopup(true);
+  try {
+    await sendorder(order);
+    await setdata(customerDataObject);
+  } catch (err) {
+    await addItem('orders', order);           
+    console.error("Error sending online order:", err);
+    toast.info("You’re offline — order is saved locally ", toastOptions);
+  }
+};
 
   const handleClosePopup = () => {
     setShowPopup(false);
@@ -430,7 +427,7 @@ const CustomerDetail = () => {
         ref={invoiceRef}
         style={{ display: "none" }}
       >
-        <img src="/logo3.png" alt="Logo" width={150} className="logo" />
+        <img src="/logo5.png" alt="Logo" width={150} className="logo" />
         {/* <h1 style={{ textAlign: "center", margin: 0, fontSize: "25px" }}>
           Urban Pizzeria
         </h1> */}

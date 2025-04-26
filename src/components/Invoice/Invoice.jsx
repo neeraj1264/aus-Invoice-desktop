@@ -18,6 +18,8 @@ import { fetchProducts, removeProduct } from "../../api";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { IoClose } from "react-icons/io5";
+import { getAll, saveItems } from "../../DB";
+import { useOnlineStatus } from "../../useOnlineStatus";
 
 const toastOptions = {
   position: "bottom-right",
@@ -38,6 +40,9 @@ const Invoice = () => {
   const [isCategoryVisible, setIsCategoryVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState("");
 
+  const { isOnline, checkBackend } = useOnlineStatus();
+  const [isChecking, setIsChecking] = useState(false);
+
   // Initialize kotCount based on existing localStorage entries
   const [kotCount, setKotCount] = useState(() => {
     const existing = JSON.parse(localStorage.getItem("kot data")) || [];
@@ -51,6 +56,21 @@ const Invoice = () => {
 
   const navigate = useNavigate(); // For navigation
 
+  const guardAddProduct = async (e) => {
+    e.preventDefault();
+    if (isChecking) return;
+    setIsChecking(true);
+    
+    // Get fresh status on click
+    const currentStatus = await checkBackend();
+    
+    if (currentStatus) {
+      navigate("/NewProduct");
+    } else {
+      alert("You’re offline—cannot add a new product right now.");
+    }
+    setIsChecking(false);
+  };
   // Update `now` every second for countdown
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -156,13 +176,17 @@ useEffect(() => {
       try {
         const products = await fetchProducts(); // Use the function from api.js
         setSelectedProducts(products);
+        await saveItems("products", products);
         setLoading(false);
-      } catch (error) {
-        console.error("Error fetching products:", error.message); // Logs the error message
+      } catch (err) {
+        console.warn("Fetch failed, loading from IDB:", err);
+        const prods = await getAll("products");
+        setSelectedProducts(prods);
         setLoading(false);
       }
     };
 
+     
     fetchData();
 
     const storedProductsToSend =
@@ -174,6 +198,15 @@ useEffect(() => {
     // setSelectedVariety([]);
   }, []);
 
+    // Persist cart to IDB whenever it changes
+    useEffect(() => {
+      // clear old cart, then repopulate
+      const syncCart = async () => {
+        await saveItems("cart", productsToSend.map((p, idx) => ({ ...p, id: idx })));
+      };
+      if (productsToSend.length) syncCart();
+    }, [productsToSend]);
+    
   const handleOpenPopup = (product) => {
     if (product.varieties && product.varieties.length > 0) {
       setCurrentProduct(product);
@@ -534,6 +567,16 @@ useEffect(() => {
     setShowKotModal(false);
   };
 
+  const nonVegCategories = new Set([
+    "Non Veg Pizza",
+    "Chicken_burger",
+    "Non_Veg_Special",
+    "Non_Veg_Soup",
+    "Chicken_Snack",
+    "Non_veg_main",
+    "Tandoori_Non_Veg",
+  ]);
+
   return (
     <div>
       <ToastContainer />
@@ -551,9 +594,10 @@ useEffect(() => {
                 .map((category, index) => (
                   <button
                     key={index}
-                    className={`category-btn ${
-                      activeCategory === category ? "active" : ""
-                    }`}
+                    className={`category-btn 
+                      ${activeCategory === category ? "active" : ""}
+                      ${nonVegCategories.has(category) ? "non-veg" : ""}
+                    `}
                     onClick={() => handleCategoryClick(category)} // Trigger scroll to category
                   >
                     {category}
@@ -802,9 +846,7 @@ useEffect(() => {
       </div>
       <div className="invoice-btn">
         <button
-          onClick={() => {
-            navigate("/NewProduct");
-          }}
+          onClick={guardAddProduct}
           className="invoice-kot-btn"
         >
           <h2> + PRODUCT </h2>
