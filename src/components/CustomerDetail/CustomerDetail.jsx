@@ -220,10 +220,11 @@ const CustomerDetail = () => {
   const handleClosePopup = () => {
     setShowPopup(false);
 
+    localStorage.removeItem("productsToSend");
+
     // Navigate to the invoice page
     navigate("/invoice");
 
-    window.location.reload();
   };
 
   const handlePngDownload = () => {
