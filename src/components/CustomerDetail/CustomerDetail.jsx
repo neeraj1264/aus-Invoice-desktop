@@ -62,7 +62,7 @@ const CustomerDetail = () => {
         setSavedCustomers(customersArray);
         // await saveItems('customers', customersArray);
       } catch {
-        const offline = await getAll('customers');
+        const offline = await getAll("customers");
         setSavedCustomers(offline);
         const localStorageCustomers =
           JSON.parse(localStorage.getItem("customers")) || [];
@@ -74,10 +74,10 @@ const CustomerDetail = () => {
     fetchData();
   }, []);
 
-   // Load orders from IDB for history
-   useEffect(() => {
+  // Load orders from IDB for history
+  useEffect(() => {
     const load = async () => {
-      const offline = await getAll('orders');
+      const offline = await getAll("orders");
       setOrders(offline);
     };
     load();
@@ -187,7 +187,6 @@ const CustomerDetail = () => {
       timestamp: new Date().toISOString(),
     };
 
-
     const customerDataObject = {
       id: orderId,
       name: customerName,
@@ -205,17 +204,17 @@ const CustomerDetail = () => {
       navigate("/invoice");
       return;
     }
-  // ONLINE: send immediately
-  setShowPopup(true);
-  try {
-    await sendorder(order);
-    await setdata(customerDataObject);
-  } catch (err) {
-    await addItem('orders', order);           
-    console.error("Error sending online order:", err);
-    toast.info("You’re offline — order is saved locally ", toastOptions);
-  }
-};
+    // ONLINE: send immediately
+    setShowPopup(true);
+    try {
+      await sendorder(order);
+      await setdata(customerDataObject);
+    } catch (err) {
+      await addItem("orders", order);
+      console.error("Error sending online order:", err);
+      toast.info("You’re offline — order is saved locally ", toastOptions);
+    }
+  };
 
   const handleClosePopup = () => {
     setShowPopup(false);
@@ -224,7 +223,6 @@ const CustomerDetail = () => {
 
     // Navigate to the invoice page
     navigate("/invoice");
-
   };
 
   const handlePngDownload = () => {
@@ -277,11 +275,11 @@ const CustomerDetail = () => {
                 border-collapse: collapse;
               }
               th, td {
-                border: 2px solid black;
+                border: 1px solid black;
                 padding: 2px;
                 text-align: left;
-                font-size: 10px;
-                font-weight: bold;
+                font-size: 11px;
+                color: "black";
               }
               .total {
                 font-size: 13px;
@@ -319,9 +317,9 @@ const CustomerDetail = () => {
       newWindow.document.close();
 
       newWindow.onload = () => {
-        newWindow.focus();
-        newWindow.print();
-        newWindow.close();
+        // newWindow.focus();
+        // newWindow.print();
+        // newWindow.close();
       };
     } catch (error) {
       console.error("Error generating printable content:", error);
@@ -349,6 +347,10 @@ const CustomerDetail = () => {
   const getdeliverycharge = localStorage.getItem("deliveryCharge")
     ? parseFloat(localStorage.getItem("deliveryCharge"))
     : 0; // Default to 0 if not set
+
+  const [logoAvailable, setLogoAvailable] = useState(true);
+  const [qrAvailable, setQrAvailable] = useState(true);
+
   return (
     <div>
       <ToastContainer />
@@ -426,10 +428,18 @@ const CustomerDetail = () => {
         ref={invoiceRef}
         style={{ display: "none" }}
       >
-        <img src="/logo5.jpg" alt="Logo5" width={150} className="logo" />
-        {/* <h1 style={{ textAlign: "center", margin: 0, fontSize: "25px" }}>
-          Urban Pizzeria
-        </h1> */}
+        {logoAvailable && (
+          <img
+            src="/logo5.jpg"
+            alt="Logo5"
+            width={150}
+            className="logo"
+            onError={() => setLogoAvailable(false)}
+          />
+        )}
+        <h1 style={{ textAlign: "center", margin: 0, fontSize: "25px" }}>
+          Australian Bite
+        </h1>
         <p
           style={{
             textAlign: "center",
@@ -548,22 +558,27 @@ const CustomerDetail = () => {
           ).toFixed(2)}
         </p>{" "}
         <hr />
+        {qrAvailable && (
+          <>
+            <div
+              style={{
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: "1rem",
+              }}
+            >
+              {" "}
+              Order Online
+            </div>
+            <img
+              src="/qr.png"
+              alt="QR Code"
+              style={{ display: "flex", margin: "2px auto" }}
+              onError={() => setQrAvailable(false)}
+            />
+          </>
+        )}
         <div
-          style={{
-            textAlign: "center",
-            fontWeight: "bold",
-            fontSize: "1rem",
-          }}
-        >
-          {" "}
-          Order Online
-        </div>
-        <img
-          src="/qr.png"
-          alt="QR Code"
-          style={{ display: "flex", margin: "2px auto" }}
-        />
-         <div
           style={{
             textAlign: "center",
             fontSize: "15px",
@@ -572,8 +587,8 @@ const CustomerDetail = () => {
         >
           Thank You Visit Again!
         </div>
-<hr/>
-<hr/>
+        <hr />
+        <hr />
       </div>
       <div className="invoice-btn">
         <button
