@@ -426,7 +426,7 @@ const CustomerDetail = () => {
         ref={invoiceRef}
         style={{ display: "none" }}
       >
-        <img src="/logo5.jpg" alt="Logo" width={150} className="logo" />
+        <img src="/logo5.jpg" alt="Logo5" width={150} className="logo" />
         {/* <h1 style={{ textAlign: "center", margin: 0, fontSize: "25px" }}>
           Urban Pizzeria
         </h1> */}
