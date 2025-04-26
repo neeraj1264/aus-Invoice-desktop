@@ -1,6 +1,6 @@
 {
     "short_name": "Invoice",
-    "name": "Invoice-generator",
+    "name": "BillZo",
     "description": "Invoice-generator",
     "start_url": ".",
     "display": "standalone",
