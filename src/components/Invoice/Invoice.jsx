@@ -43,15 +43,27 @@ const Invoice = () => {
   const { isOnline, checkBackend } = useOnlineStatus();
   const [isChecking, setIsChecking] = useState(false);
 
-  // Initialize kotCount based on existing localStorage entries
-  const [kotCount, setKotCount] = useState(() => {
-    const existing = JSON.parse(localStorage.getItem("kot data")) || [];
-    return existing.length;
-  });
+  // default to “delivery”
+  const [orderType, setOrderType] = useState("delivery");
+
+  // two separate lists in localStorage
+  const [deliveryBills, setDeliveryBills] = useState(
+    () => JSON.parse(localStorage.getItem("deliveryKotData")) || []
+  );
+  const [dineInBills, setDineInBills] = useState(
+    () => JSON.parse(localStorage.getItem("dineInKotData")) || []
+  );
+
+  // tracks which list to show in the modal
+  const [modalType, setModalType] = useState("delivery"); // "delivery" or "dine-in"
+
+  const openBillsModal = (type) => {
+    setModalType(type);
+    setShowKotModal(true);
+  };
 
   // State for modal visibility and data
   const [showKotModal, setShowKotModal] = useState(false);
-  const [kotDataList, setKotDataList] = useState([]);
   const [now, setNow] = useState(Date.now());
 
   const navigate = useNavigate(); // For navigation
@@ -60,10 +72,10 @@ const Invoice = () => {
     e.preventDefault();
     if (isChecking) return;
     setIsChecking(true);
-    
+
     // Get fresh status on click
     const currentStatus = await checkBackend();
-    
+
     if (currentStatus) {
       navigate("/NewProduct");
     } else {
@@ -131,36 +143,35 @@ const Invoice = () => {
     [filteredProducts]
   );
 
- // initialize activeCategory when filteredProducts first load
- useEffect(() => {
-  if (categories.length) setActiveCategory(categories[0]);
-}, [categories]);
+  // initialize activeCategory when filteredProducts first load
+  useEffect(() => {
+    if (categories.length) setActiveCategory(categories[0]);
+  }, [categories]);
 
-// improved scroll‐spy
-useEffect(() => {
-  const offset = 7 * 24; // px
+  // improved scroll‐spy
+  useEffect(() => {
+    const offset = 7 * 24; // px
 
-  const onScroll = () => {
-    // build array of {cat, distance} pairs
-    const distances = categories.map((cat) => {
-      const el = document.getElementById(cat);
-      const top = el ? el.getBoundingClientRect().top : Infinity;
-      return { cat, distance: top - offset };
-    });
+    const onScroll = () => {
+      // build array of {cat, distance} pairs
+      const distances = categories.map((cat) => {
+        const el = document.getElementById(cat);
+        const top = el ? el.getBoundingClientRect().top : Infinity;
+        return { cat, distance: top - offset };
+      });
 
-    // filter for those “above” the offset, then pick the one closest to it
-    const inView = distances
-      .filter((d) => d.distance <= 0)
-      .sort((a, b) => b.distance - a.distance);
+      // filter for those “above” the offset, then pick the one closest to it
+      const inView = distances
+        .filter((d) => d.distance <= 0)
+        .sort((a, b) => b.distance - a.distance);
 
-    setActiveCategory(inView[0]?.cat ?? categories[0]);
-  };
+      setActiveCategory(inView[0]?.cat ?? categories[0]);
+    };
 
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll(); // run once on mount
-  return () => window.removeEventListener("scroll", onScroll);
-}, [categories]);
-  
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // run once on mount
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [categories]);
 
   useEffect(() => {
     const fromCustomerDetail = location.state?.from === "customer-detail";
@@ -186,7 +197,6 @@ useEffect(() => {
       }
     };
 
-     
     fetchData();
 
     const storedProductsToSend =
@@ -198,15 +208,18 @@ useEffect(() => {
     // setSelectedVariety([]);
   }, []);
 
-    // Persist cart to IDB whenever it changes
-    useEffect(() => {
-      // clear old cart, then repopulate
-      const syncCart = async () => {
-        await saveItems("cart", productsToSend.map((p, idx) => ({ ...p, id: idx })));
-      };
-      if (productsToSend.length) syncCart();
-    }, [productsToSend]);
-    
+  // Persist cart to IDB whenever it changes
+  useEffect(() => {
+    // clear old cart, then repopulate
+    const syncCart = async () => {
+      await saveItems(
+        "cart",
+        productsToSend.map((p, idx) => ({ ...p, id: idx }))
+      );
+    };
+    if (productsToSend.length) syncCart();
+  }, [productsToSend]);
+
   const handleOpenPopup = (product) => {
     if (product.varieties && product.varieties.length > 0) {
       setCurrentProduct(product);
@@ -427,18 +440,6 @@ useEffect(() => {
     }
   };
 
-  // Navigate to the customer details page
-  const handleDone = () => {
-    if (productsToSend.length === 0) {
-      toast.error(
-        "Please add at least one product before proceeding.",
-        toastOptions
-      );
-      return; // Prevent navigation if no products are selected
-    }
-
-    navigate("/customer-detail"); // Navigate to customer detail page
-  };
 
   // Helper function to calculate total price
   const calculateTotalPrice = (products = []) => {
@@ -473,31 +474,41 @@ useEffect(() => {
 
   // New: KOT (Kitchen Order Ticket) print handler
   const handleKot = () => {
-    // Retrieve existing KOT data array or initialize
-    const existingKot = JSON.parse(localStorage.getItem("kot data")) || [];
     // Append current order snapshot
     const kotEntry = {
       timestamp: Date.now(),
       date: new Date().toLocaleString(),
       items: productsToSend,
+      orderType,
     };
-    existingKot.push(kotEntry); // Save back to localStorage
-    localStorage.setItem("kot data", JSON.stringify(existingKot));
+
+    if (orderType === "delivery") {
+      const next = [...deliveryBills, kotEntry];
+      setDeliveryBills(next);
+      localStorage.setItem("deliveryKotData", JSON.stringify(next));
+    } else {
+      const next = [...dineInBills, kotEntry];
+      setDineInBills(next);
+      localStorage.setItem("dineInKotData", JSON.stringify(next));
+    }
 
     // Clear current productsToSend
     setProductsToSend([]);
     localStorage.setItem("productsToSend", JSON.stringify([]));
-
-    // Update kotCount for next order
-    setKotCount(existingKot.length);
 
     const printArea = document.getElementById("sample-section");
     if (!printArea) {
       console.warn("No sample-section found to print.");
       return;
     }
-    // Open new window and write content
-    const printContent = printArea.innerHTML;
+
+    const header = `
+  <div style="text-align:center; font-weight:700; margin-bottom:8px;">
+    ${orderType === "delivery" ? "Delivery" : "Dine-In"}
+  </div>
+`;
+
+    const printContent = header + printArea.innerHTML;
     const win = window.open("", "", "width=600,height=400");
     const style = `<style>
   @page { size: 48mm auto; margin:0; }
@@ -526,42 +537,40 @@ useEffect(() => {
     win.close();
   };
 
-  // Open modal to show all KOT entries
-  const handleOpenKotModal = () => {
-    const existingKot = JSON.parse(localStorage.getItem("kot data")) || [];
-    const now = Date.now();
-    const validEntries = existingKot.filter(
-      (kot) => now - kot.timestamp < 2 * 60 * 60 * 1000
-    );
-    // save back filtered list
-    localStorage.setItem("kot data", JSON.stringify(validEntries));
-    setKotDataList(existingKot);
-    setShowKotModal(true);
-  };
-
-  const handleCreateInvoice = (orderItems) => {
-    // Save selected KOT order to productsToSend and navigate
+  const handleCreateInvoice = (orderItems, type) => {
+    // save the items and the order type
     localStorage.setItem("productsToSend", JSON.stringify(orderItems));
-    navigate("/customer-detail");
+    localStorage.setItem("orderType", type);
+    // also pass via react-router state (optional, but nice)
+    navigate("/customer-detail", { state: { orderType: type } });
     setShowKotModal(false);
   };
 
   const deleteKot = (idx) => {
-    const existingKot = [...kotDataList];
-    existingKot.splice(idx, 1);
-    localStorage.setItem("kot data", JSON.stringify(existingKot));
-    setKotDataList(existingKot);
-    setKotCount(existingKot.length);
+    if (modalType === "delivery") {
+      const updated = deliveryBills.filter((_, i) => i !== idx);
+      setDeliveryBills(updated);
+      localStorage.setItem("deliveryKotData", JSON.stringify(updated));
+    } else {
+      const updated = dineInBills.filter((_, i) => i !== idx);
+      setDineInBills(updated);
+      localStorage.setItem("dineInKotData", JSON.stringify(updated));
+    }
   };
-
-  // Edit KOT: load into current and close modal
+  
   const editKot = (order, idx) => {
-    const updatedKotList = [...kotDataList];
-    updatedKotList.splice(idx, 1);
-    localStorage.setItem("kot data", JSON.stringify(updatedKotList));
-    setKotDataList(updatedKotList);
-    setKotCount(updatedKotList.length);
-
+    // Remove from the correct list
+    if (modalType === "delivery") {
+      const updated = deliveryBills.filter((_, i) => i !== idx);
+      setDeliveryBills(updated);
+      localStorage.setItem("deliveryKotData", JSON.stringify(updated));
+    } else {
+      const updated = dineInBills.filter((_, i) => i !== idx);
+      setDineInBills(updated);
+      localStorage.setItem("dineInKotData", JSON.stringify(updated));
+    }
+  
+    // Load into current products
     setProductsToSend(order);
     localStorage.setItem("productsToSend", JSON.stringify(order));
     setShowKotModal(false);
@@ -752,7 +761,6 @@ useEffect(() => {
             <div className="check-container">
               <>
                 <ul className="product-list" id="sample-section">
-                  {/* <div style={{ textAlign: "center" }}>{dash}</div> */}
                   <hr className="hr" />
                   <li className="product-item" style={{ display: "flex" }}>
                     <div style={{ width: "10%" }}>
@@ -829,10 +837,28 @@ useEffect(() => {
                   </li>
                   {/* <div style={{ textAlign: "center" }}>{dash}</div> */}
                   <hr className="hr" />
+                  <hr className="hr" style={{marginBottom: "3rem"}}/>
+
                 </ul>
+                <div className="order-type">
+                  {["delivery", "dine-in"].map((type) => (
+                    <label key={type} className="order-option">
+                      <input
+                        type="radio"
+                        name="orderType"
+                        value={type}
+                        checked={orderType === type}
+                        onChange={() => setOrderType(type)}
+                      />
+                      <span>
+                        {type === "delivery" ? "Delivery" : "Dine-In"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
                 <button
                   onClick={handleKot}
-                  className="invoice-next-btn"
+                  className="kot-btn"
                   style={{ borderRadius: "0" }}
                 >
                   <h2> Print Kot </h2>
@@ -845,26 +871,28 @@ useEffect(() => {
         )}
       </div>
       <div className="invoice-btn">
-        <button
-          onClick={guardAddProduct}
-          className="invoice-kot-btn"
-        >
+        <button onClick={guardAddProduct} className="invoice-kot-btn">
           <h2> + PRODUCT </h2>
         </button>
 
-        <button onClick={handleOpenKotModal} className="invoice-next-btn">
-          <h2> Pending Bills {kotCount}</h2>
+        <button
+          onClick={() => openBillsModal("delivery")}
+          className="invoice-next-btn"
+        >
+          <h2>Delivery Bills ({deliveryBills.length})</h2>
         </button>
 
-        {/* <button onClick={handleDone} className="invoice-next-btn">
-          <h2> NEXT ₹{calculateTotalPrice(productsToSend).toFixed(2)}</h2>
-        </button> */}
-        {/* KOT Modal */}
+        <button
+          onClick={() => openBillsModal("dine-in")}
+          className="invoice-next-btn"
+        >
+          <h2>Dine-In Bills ({dineInBills.length})</h2>
+        </button>
       </div>
       {showKotModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Pending Bills</h3>
+            <h3>{modalType === "delivery" ? "Delivery" : "Dine-In"} Bills</h3>
             <button
               className="close-btn"
               onClick={() => setShowKotModal(false)}
@@ -872,52 +900,58 @@ useEffect(() => {
               <IoClose />
             </button>
             <div className="kot-list">
-              {kotDataList.length === 0 && <p>No KOT data found.</p>}
-              {kotDataList.map((order, idx) => {
-                const remaining = 2 * 60 * 60 * 1000 - (now - order.timestamp);
-                return (
-                  <div key={idx} className="kot-entry">
-                    <h4 className="kot-timer">
-                      Bill Expire in <span>{formatRemaining(remaining)}</span>
-                    </h4>
-                    <h4>
-                      KOT #{idx + 1}
-                      <span className="kot-date">{order.date}</span>
-                    </h4>
-                    <ul>
-                      {order.items.map((item, i) => (
-                        <>
-                          <li key={i} className="kot-product-item">
-                            <span>
-                              {item.name} x {item.quantity}
-                            </span>
-                            <span>
-                              ₹{(item.price * item.quantity).toFixed(2)}
-                            </span>
-                          </li>
-                        </>
-                      ))}
-                    </ul>
-                    <div className="kot-entry-actions">
-                      <FaTrash
-                        className="del-action-icon action-icon"
-                        size={20}
-                        onClick={() => deleteKot(idx)}
-                      />
-                      <FaEdit
-                        className="edit-action-icon action-icon"
-                        size={20}
-                        onClick={() => editKot(order.items, idx)}
-                      />
-                      <FaFileInvoice
-                        className="invoice-action-icon action-icon"
-                        size={20}
-                        onClick={() => handleCreateInvoice(order.items)}
-                      />
+              {(modalType === "delivery" ? deliveryBills : dineInBills)
+                .length === 0 && <p>No bills found.</p>}
+              {(modalType === "delivery" ? deliveryBills : dineInBills).map(
+                (order, idx) => {
+                  const remaining =
+                    2 * 60 * 60 * 1000 - (now - order.timestamp);
+                  return (
+                    <div key={idx} className="kot-entry">
+                      <h4 className="kot-timer">
+                        Bill Expire in <span>{formatRemaining(remaining)}</span>
+                      </h4>
+                      <h4>
+                        KOT #{idx + 1}
+                        <span className="kot-date">{order.date}</span>
+                      </h4>
+                      <ul>
+                        {order.items.map((item, i) => (
+                          <>
+                            <li key={i} className="kot-product-item">
+                              <span>
+                                {item.name} x {item.quantity}
+                              </span>
+                              <span>
+                                ₹{(item.price * item.quantity).toFixed(2)}
+                              </span>
+                            </li>
+                          </>
+                        ))}
+                      </ul>
+                      <div className="kot-entry-actions">
+                        <FaTrash
+                          className="del-action-icon action-icon"
+                          size={20}
+                          onClick={() => deleteKot(idx)}
+                        />
+                        <FaEdit
+                          className="edit-action-icon action-icon"
+                          size={20}
+                          onClick={() => editKot(order.items, idx)}
+                        />
+                        <FaFileInvoice
+                          className="invoice-action-icon action-icon"
+                          size={20}
+                          onClick={() =>
+                            handleCreateInvoice(order.items, modalType)
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           </div>
         </div>

@@ -276,38 +276,23 @@
   position: fixed;
   bottom: 0;
   display: flex;
-  /* justify-content: space-between; */
   width: calc(100%);
-  /* padding: 0 0.5rem; */
   background: transparent;
   z-index: 2;
+  gap: 0.1rem;  
 }
 
 .invoice-btn button {
   display: flex;
   width: 50%;
-  /* border: none; */
 }
-/* .invoice-next-btn{
-  color: white;
-  margin: auto;
-  padding: 10px;
-  font-size: 1rem;
-  background: var(--bg);
-  border-radius: 0 1rem 0 0;
-}
-.invoice-next-btn h2{
-  margin: auto;
-  font-size: 1.2rem;
-  color: white;
-  font-weight: bold;
-} */
+
 .invoice-next-btn {
   background-color: var(--bg); /* or your brand color */
   color: white;
   padding: 12px 24px;
-  border: none;
-  border-radius: 0 1rem 0 0 ;
+  /* border: none; */
+  border-radius: 1rem 1rem 0 0 ;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -331,11 +316,10 @@
 
 .invoice-kot-btn{
   color: white;
-  margin: auto;
   padding: 10px;
   font-size: 1rem;
   background: white;
-  border-radius: 1rem 0 0 0;
+  border-radius: 1rem 1rem 0 0;
 }
 .invoice-kot-btn h2{
   margin: auto;
@@ -649,4 +633,107 @@ input[type="checkbox"] {
 .category-btn.non-veg.active {
   background-color: #ff0026; 
   font-weight: bold;
+}
+
+
+
+
+.order-type {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.order-option {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.order-option input {
+  appearance: none;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.order-option span {
+  position: relative;
+  padding: 0.5rem 1.4rem 0.5rem 2.8rem;
+  border: 2px solid #ed6629;
+  border-radius: 999px;
+  color: #ed6629;
+  font-weight: 600;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.order-option span::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.6rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid #ed6629;
+  border-radius: 50%;
+  background: white;
+  transform: translateY(-50%);
+  transition: all 0.3s ease;
+}
+
+.order-option span::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.6rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: #ed6629;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.order-option input:checked + span {
+  background: linear-gradient(135deg, #ed6629, #ff8a55);
+  border-color: #ed6629;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  padding-right: 2rem;
+}
+
+.order-option input:checked + span::before {
+  left: calc(100% - 1.8rem);
+  background: #fff;
+  border-color: #fff;
+}
+
+.order-option input:checked + span::after {
+  left: calc(100% - 1.8rem);
+  opacity: 1;
+}
+
+.kot-btn{
+  background-color: var(--bg); /* or your brand color */
+  color: white;
+  padding: 12px 24px;
+  /* border: none; */
+  border-radius: 1rem 1rem 0 0 ;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+.kot-btn h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: white;
 }

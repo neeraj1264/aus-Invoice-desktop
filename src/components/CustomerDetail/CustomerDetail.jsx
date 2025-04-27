@@ -1,7 +1,7 @@
 // CustomerDetail.js
 import React, { useState, useEffect, useRef } from "react";
 import { FaArrowLeft, FaArrowRight, FaCloudDownloadAlt } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { handleScreenshot } from "../Utils/DownloadPng"; // Import the function
 import "./Customer.css";
 // import { handleScreenshotAsPDF } from "../Utils/DownloadPdf";
@@ -351,6 +351,8 @@ const CustomerDetail = () => {
   const [logoAvailable, setLogoAvailable] = useState(true);
   const [qrAvailable, setQrAvailable] = useState(true);
 
+    const orderType = (localStorage.getItem("orderType"));
+
   return (
     <div>
       <ToastContainer />
@@ -428,6 +430,10 @@ const CustomerDetail = () => {
         ref={invoiceRef}
         style={{ display: "none" }}
       >
+        
+        <h3 style={{textAlign: "center"}}>
+        {orderType === "delivery" ? "Delivery" : "Dine-In"}
+      </h3>
         {logoAvailable && (
           <img
             src="/logo5.jpg"
