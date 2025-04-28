@@ -36,6 +36,9 @@ const CustomerDetail = () => {
   // State to hold suggestions based on current phone input
   const [phoneSuggestions, setPhoneSuggestions] = useState([]);
 
+  const [discountAmount, setDiscountAmount] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("");
+
   const invoiceRef = useRef(); // Reference to the hidden invoice content
   const navigate = useNavigate();
 
@@ -105,11 +108,35 @@ const CustomerDetail = () => {
     setPhoneSuggestions([]);
   };
 
-  const handleSendToWhatsApp = () => {
-    const restaurantName = "Australian Bite";
+  // Helper function to calculate total price
+  const calculateTotalPrice = (products = []) => {
+    return products.reduce(
+      (total, product) => total + product.price * product.quantity,
+      0
+    );
+  };
 
-    const currentTotalAmount =
-      calculateTotalPrice(productsToSend) + deliveryChargeAmount;
+  const computeTotals = () => {
+    const base = calculateTotalPrice(productsToSend) + deliveryChargeAmount;
+
+    const amt = parseFloat(discountAmount) || 0;
+    const pct = parseFloat(discountPercent) || 0;
+
+    let disc = 0;
+    if (pct > 0) disc = (pct / 100) * base;
+    else if (amt > 0) disc = amt;
+    disc = Math.min(disc, base);
+
+    return { base, discountValue: disc, netTotal: base - disc };
+  };
+
+  const { discountValue, netTotal } = computeTotals();
+
+  const handleSendToWhatsApp = () => {
+
+    // Reuse your computeTotals logic so WhatsApp matches the printed invoice
+    const { base, discountValue, netTotal } = computeTotals();
+    // base is itemTotal + deliveryChargeAmount
 
     // Map product details into a formatted string
     const productDetails = productsToSend
@@ -124,22 +151,27 @@ const CustomerDetail = () => {
 
     // Check if deliveryCharge exists
     const serviceChargeText = deliveryCharge
-      ? `Service Charge: ₹${deliveryChargeAmount}` // No extra newline
+      ? `Service Charge +${deliveryChargeAmount}` // No extra newline
       : "";
 
     const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Construct the WhatsApp message
-    const message = encodeURIComponent(
-      `*🍔🍟🍕 ${restaurantName} 🍕🍟🍔*\n\n` +
-        `Order: *${orderId}*` +
-        (customerPhone ? `\nPhone: *${customerPhone}*` : "") +
-        (customerName ? `\nName: *${customerName}*` : "") +
-        (customerAddress ? `\nAddress: *${customerAddress}*` : "") +
-        `\nAmount: *₹${currentTotalAmount}*` +
-        `\n\n----------item----------\n${productDetails}` + // No extra newline here
-        (serviceChargeText ? `\n${serviceChargeText}` : "") // Add only if serviceChargeText exists
-    );
+  // Build the WhatsApp message in the same order as the invoice
+   let msg = `Order: *${orderId}*\n`;
+   msg += `Amount: *${netTotal.toFixed(2)}*`;
+   if (customerPhone)   msg += `\nPhone: *${customerPhone}*`;
+   if (customerName)    msg += `\nName: *${customerName}*`;
+   if (customerAddress) msg += `\nAddress: *${customerAddress}*`;
+   msg += `\n\n----------ITEMS----------\n${productDetails}`;
+   // Totals block
+   if (serviceChargeText) {
+     msg += `\n\n${serviceChargeText}`;
+   }
+
+   if (discountValue > 0) {
+     msg += `\nDiscount  *–${discountValue.toFixed(2)}*`;
+   }
+   const message = encodeURIComponent(msg);
 
     const phoneNumber = customerPhone;
 
@@ -162,6 +194,8 @@ const CustomerDetail = () => {
   };
 
   const handleSendClick = async () => {
+    const { discountValue, netTotal } = computeTotals();
+
     const productsToSend = JSON.parse(localStorage.getItem("productsToSend"));
     if (!productsToSend || productsToSend.length === 0) {
       toast.error("Please add product before proceed", toastOptions);
@@ -180,7 +214,8 @@ const CustomerDetail = () => {
     const order = {
       id: orderId,
       products: productsToSend,
-      totalAmount: calculateTotalPrice(productsToSend) + deliveryChargeAmount,
+      totalAmount: netTotal,
+      discountApplied: discountValue,
       name: customerName,
       phone: customerPhone,
       address: customerAddress,
@@ -281,10 +316,13 @@ const CustomerDetail = () => {
                 font-size: 11px;
                 color: "black";
               }
-              .total {
+                .total {
                 font-size: 13px;
                 text-align: left;
                 margin-top: 4px;
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
               }
               .totalAmount {
                 font-size: 15px;
@@ -326,14 +364,6 @@ const CustomerDetail = () => {
     }
   };
 
-  // Helper function to calculate total price
-  const calculateTotalPrice = (products = []) => {
-    return products.reduce(
-      (total, product) => total + product.price * product.quantity,
-      0
-    );
-  };
-
   // Handle customer phone input validation
   const handlePhoneChange = (e) => {
     const phoneValue = e.target.value;
@@ -351,7 +381,7 @@ const CustomerDetail = () => {
   const [logoAvailable, setLogoAvailable] = useState(true);
   const [qrAvailable, setQrAvailable] = useState(true);
 
-    const orderType = (localStorage.getItem("orderType"));
+  const orderType = localStorage.getItem("orderType");
 
   return (
     <div>
@@ -423,6 +453,50 @@ const CustomerDetail = () => {
           placeholder="Delivery charge..."
         />
       </div>
+
+      <div className="cust-inputs">
+        <input
+          type="number"
+          value={discountAmount}
+          onChange={(e) => {
+            setDiscountAmount(e.target.value);
+            setDiscountPercent(""); // clear percent if you start typing an amount
+          }}
+          placeholder="Discount (₹ amount)"
+        />
+      </div>
+      <div className="cust-inputs">
+        <select
+          value={discountPercent}
+          onChange={(e) => {
+            setDiscountPercent(e.target.value);
+            setDiscountAmount("");
+          }}
+        >
+          <option value="">Discount (%)</option>
+          <option value="5">5%</option>
+          <option value="10">10%</option>
+          <option value="15">15%</option>
+          <option value="20">20%</option>
+          <option value="25">25%</option>
+          <option value="30">30%</option>
+          <option value="35">35%</option>
+          <option value="40">40%</option>
+          <option value="45">45%</option>
+          <option value="50">50%</option>
+          <option value="55">55%</option>
+          <option value="60">60%</option>
+          <option value="65">65%</option>
+          <option value="70">70%</option>
+          <option value="75">75%</option>
+          <option value="80">80%</option>
+          <option value="85">85%</option>
+          <option value="90">90%</option>
+          <option value="95">95%</option>
+          <option value="100">100%</option>
+        </select>
+      </div>
+
       {/* mobile print content */}
       <div
         className="invoice-content"
@@ -430,10 +504,9 @@ const CustomerDetail = () => {
         ref={invoiceRef}
         style={{ display: "none" }}
       >
-        
-        <h3 style={{textAlign: "center"}}>
-        {orderType === "delivery" ? "Delivery" : "Dine-In"}
-      </h3>
+        <h3 style={{ textAlign: "center" }}>
+          {orderType === "delivery" ? "Delivery" : "Dine-In"}
+        </h3>
         {logoAvailable && (
           <img
             src="/logo5.jpg"
@@ -533,37 +606,34 @@ const CustomerDetail = () => {
         {getdeliverycharge !== 0 && (
           <>
             <div className="total">
-              <p style={{ margin: "1rem 0 0 0" }}>
-                Item Total{" "}
-                <span>
-                  ₹{" "}
-                  {productsToSend
-                    .reduce(
-                      (sum, product) =>
-                        sum + product.price * (product.quantity || 1),
-                      0
-                    )
-                    .toFixed(2)}
-                </span>
+              <p style={{ margin: "1rem 0 0 0" }}>Item Total </p>
+
+              <p style={{ margin: "0" }}>
+                ₹
+                {productsToSend
+                  .reduce(
+                    (sum, product) =>
+                      sum + product.price * (product.quantity || 1),
+                    0
+                  )
+                  .toFixed(2)}
               </p>
             </div>
             <div className="total">
-              <p style={{ margin: "0" }}>
-                Service Charge: <span>₹{getdeliverycharge.toFixed(2)}</span>
-              </p>
+              <p style={{ margin: "0" }}>Service Charge:</p>
+              <p style={{ margin: "0" }}>₹{getdeliverycharge.toFixed(2)}</p>
             </div>
           </>
         )}
-        <p className="totalAmount">
-          Net Total: ₹
-          {(
-            productsToSend.reduce(
-              (sum, product) => sum + product.price * (product.quantity || 1),
-              0
-            ) + getdeliverycharge
-          ).toFixed(2)}
-        </p>{" "}
-        <hr />
+        {(discountAmount > 0 || discountPercent > 0) && (
+          <div className="total">
+            <p style={{ margin: 0 }}>
+              Discount: {discountPercent > 0 && ` (${discountPercent}%)`}
+            </p>
+            <p style={{ margin: "0" }}>–{discountValue.toFixed(2)}</p>
+          </div>
+        )}
+        <p className="totalAmount">Net Total: ₹{netTotal.toFixed(2)}</p> <hr />
         {qrAvailable && (
           <>
             <div
