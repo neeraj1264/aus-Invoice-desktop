@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 export const BASE_URL = "https://invoice-backend-7czy.vercel.app/api"; 
-=======
-const BASE_URL = 'https://invoice-backend-7czy.vercel.app/api'; 
->>>>>>> 2554960b3723942bd4ae48313595372a8842293f
 // const BASE_URL = "http://localhost:5000/api";
 
 export const fetchCategories = async () => {
