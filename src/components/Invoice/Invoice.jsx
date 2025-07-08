@@ -21,6 +21,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { IoClose } from "react-icons/io5";
 import { getAll, saveItems } from "../../DB";
 import { useOnlineStatus } from "../../useOnlineStatus";
+import Rawbt3Inch from "../Utils/Rawbt3Inch";
 
 const toastOptions = {
   position: "bottom-right",
@@ -40,6 +41,7 @@ const Invoice = () => {
   const [loading, setLoading] = useState(true);
   const [isCategoryVisible, setIsCategoryVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState("");
+  const [includeGST, setIncludeGST] = useState(true);
 
   const { isOnline, checkBackend } = useOnlineStatus();
   const [isChecking, setIsChecking] = useState(false);
@@ -235,6 +237,11 @@ const Invoice = () => {
     } else {
       handleAddToWhatsApp(product); // Directly add product if no varieties
     }
+  };
+  const handleProductClick = (product) => {
+    const audio = new Audio("/sounds/click.wav"); // path from public folder
+    audio.play();
+    handleOpenPopup(product);
   };
 
   // useEffect(() => {
@@ -624,56 +631,60 @@ const Invoice = () => {
                       {filteredProducts[category]
                         .sort((a, b) => a.price - b.price) // Sort products by price in ascending order
                         .map((product, idx) => {
-                           const quantity =
-      productsToSend.find(
-        (prod) =>
-          prod.name === product.name && prod.price === product.price
-      )?.quantity || 0;
-      return (
-                          <div
-                            key={idx}
-                            className={`main-box ${quantity > 0 ? "highlighted" : ""}`}
-                            onClick={() => handleOpenPopup(product)}
-                          >
-                            <div className="sub-box">
-                              <h4 className="p-name">
-                                {product.name}
-                                {product.varieties &&
-                                Array.isArray(product.varieties) &&
-                                product.varieties[0]?.size
-                                  ? ` (${product.varieties[0].size})`
-                                  : ""}
-                              </h4>
-                              <p className="p-name-price">
-                                Rs.{" "}
-                                {product.price
-                                  ? product.price.toFixed(2) // Use product price if it exists
-                                  : product.varieties.length > 0
-                                  ? product.varieties[0].price.toFixed(2) // Fallback to first variety price
-                                  : "N/A"}{" "}
-                              </p>
-                                 {(productsToSend.find(
+                          const effectivePrice = product.price
+                            ? product.price
+                            : product.varieties.length > 0
+                            ? product.varieties[0].price
+                            : 0;
+
+                          const quantity =
+                            productsToSend.find(
                               (prod) =>
                                 prod.name === product.name &&
-                                prod.price === product.price
-                            )?.quantity || 0) > 0 && (
-                              <span className="quantity-badge">
-                                <span>
-                                  <FaShoppingCart />
-                                  {
-                                    productsToSend.find(
-                                      (prod) =>
-                                        prod.name === product.name &&
-                                        prod.price === product.price
-                                    )?.quantity
-                                  }
-                                </span>
-                              </span>
-                            )}
+                                prod.price === effectivePrice
+                            )?.quantity || 0;
+                          return (
+                            <div
+                              key={idx}
+                              className={`main-box ${
+                                quantity > 0 ? "highlighted" : ""
+                              }`}
+                              onClick={() => handleProductClick(product)}
+                            >
+                              <div className="sub-box">
+                                <h4 className="p-name">
+                                  {product.name}
+                                  {product.varieties &&
+                                  Array.isArray(product.varieties) &&
+                                  product.varieties[0]?.size
+                                    ? ` (${product.varieties[0].size})`
+                                    : ""}
+                                </h4>
+                                <p className="p-name-price">
+                                  Rs. {effectivePrice.toFixed(2)}
+                                </p>
+                                {(productsToSend.find(
+                                  (prod) =>
+                                    prod.name === product.name &&
+                                    prod.price === effectivePrice
+                                )?.quantity || 0) > 0 && (
+                                  <span className="quantity-badge">
+                                    <span>
+                                      <FaShoppingCart />
+                                      {
+                                        productsToSend.find(
+                                          (prod) =>
+                                            prod.name === product.name &&
+                                            prod.price === effectivePrice
+                                        )?.quantity
+                                      }
+                                    </span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                         
-                          </div>
-                        )})}
+                          );
+                        })}
                     </div>
                   </div>
                 ))
@@ -784,31 +795,30 @@ const Invoice = () => {
                   </li>
                   {/* <div style={{ textAlign: "center" }}>{dash}</div> */}
                   <hr className="hr" />
-                  <hr className="hr" style={{ marginBottom: "3rem" }} />
+                  <hr className="hr" style={{ marginBottom: "1rem" }} />
                 </ul>
-                <div className="order-type">
-                  {["delivery", "dine-in"].map((type) => (
-                    <label key={type} className="order-option">
-                      <input
-                        type="radio"
-                        name="orderType"
-                        value={type}
-                        checked={orderType === type}
-                        onChange={() => setOrderType(type)}
-                      />
-                      <span>
-                        {type === "delivery" ? "Delivery" : "Dine-In"}
-                      </span>
-                    </label>
-                  ))}
+
+                <div className="checkbox-gst-container">
+                  <input
+                    type="checkbox"
+                    checked={includeGST}
+                    onChange={(e) => setIncludeGST(e.target.checked)}
+                  />
+                  <label>Include GST (5%)</label>
                 </div>
-                <button
+
+                <Rawbt3Inch
+                  className="kot-btn"
+                  productsToSend={productsToSend}
+                  includeGST={includeGST}
+                />
+                {/* <button
                   onClick={handleKot}
                   className="kot-btn"
                   style={{ borderRadius: "0" }}
                 >
                   <h2> Print Kot </h2>
-                </button>
+                </button> */}
               </>
             </div>
           </div>
