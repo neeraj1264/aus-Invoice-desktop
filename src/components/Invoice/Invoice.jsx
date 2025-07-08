@@ -10,6 +10,7 @@ import {
   FaTimesCircle,
   FaSearch,
   FaEdit,
+  FaShoppingCart,
 } from "react-icons/fa";
 // import { AiOutlineBars } from "react-icons/ai";
 import { IoMdCloseCircle } from "react-icons/io";
@@ -440,7 +441,6 @@ const Invoice = () => {
     }
   };
 
-
   // Helper function to calculate total price
   const calculateTotalPrice = (products = []) => {
     return products.reduce(
@@ -557,7 +557,7 @@ const Invoice = () => {
       localStorage.setItem("dineInKotData", JSON.stringify(updated));
     }
   };
-  
+
   const editKot = (order, idx) => {
     // Remove from the correct list
     if (modalType === "delivery") {
@@ -569,22 +569,12 @@ const Invoice = () => {
       setDineInBills(updated);
       localStorage.setItem("dineInKotData", JSON.stringify(updated));
     }
-  
+
     // Load into current products
     setProductsToSend(order);
     localStorage.setItem("productsToSend", JSON.stringify(order));
     setShowKotModal(false);
   };
-
-  const nonVegCategories = new Set([
-    "Non Veg Pizza",
-    "Chicken_burger",
-    "Non_Veg_Special",
-    "Non_Veg_Soup",
-    "Chicken_Snack",
-    "Non_veg_main",
-    "Tandoori_Non_Veg",
-  ]);
 
   return (
     <div>
@@ -605,7 +595,6 @@ const Invoice = () => {
                     key={index}
                     className={`category-btn 
                       ${activeCategory === category ? "active" : ""}
-                      ${nonVegCategories.has(category) ? "non-veg" : ""}
                     `}
                     onClick={() => handleCategoryClick(category)} // Trigger scroll to category
                   >
@@ -627,127 +616,65 @@ const Invoice = () => {
               Object.keys(filteredProducts)
                 .sort((a, b) => a.localeCompare(b)) // Sort category names alphabetically
                 .map((category, index) => (
-                  <div key={index} className="category-container">
+                  <div key={index} className="category-block">
                     <h2 className="category" id={category}>
                       {category}
                     </h2>
-                    {filteredProducts[category]
-                      .sort((a, b) => a.price - b.price) // Sort products by price in ascending order
-                      .map((product, idx) => (
-                        <>
-                          <hr />
-                          <div>
-                            <div key={idx} className="main-box">
-                              {/* <div className="img-box">
-                          {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              style={{ width: "3rem", height: "3rem" }}
-                            />
-                          ) : (
-                            <FaImage
-                              style={{ width: "3rem", height: "3rem" }}
-                            />
-                          )}
-                        </div> */}
-
-                              <div
-                                className="sub-box"
-                                onMouseDown={handlePressStart}
-                                onMouseUp={handlePressEnd}
-                                onTouchStart={handlePressStart}
-                                onTouchEnd={handlePressEnd}
-                              >
-                                <h4 className="p-name">
-                                  {product.name}
-                                  {product.varieties &&
-                                  Array.isArray(product.varieties) &&
-                                  product.varieties[0]?.size
-                                    ? ` (${product.varieties[0].size})`
-                                    : ""}
-                                </h4>
-                                <p className="p-name-price">
-                                  Rs.{" "}
-                                  {product.price
-                                    ? product.price.toFixed(2) // Use product price if it exists
-                                    : product.varieties.length > 0
-                                    ? product.varieties[0].price.toFixed(2) // Fallback to first variety price
-                                    : "N/A"}{" "}
-                                  {/* Handle case when neither price nor varieties are available */}
-                                  {showRemoveBtn && (
-                                    <span
-                                      className="remove-btn"
-                                      onClick={() =>
-                                        handleRemoveProduct(
-                                          product.name,
-                                          product.price
-                                        )
-                                      }
-                                    >
-                                      <FaTimesCircle />
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-
-                              {productsToSend.some(
-                                (prod) =>
-                                  prod.name === product.name &&
-                                  prod.price === product.price
-                              ) ? (
-                                <div className="quantity-btns">
-                                  <button
-                                    className="icons"
-                                    onClick={() =>
-                                      handleQuantityChange(
-                                        product.name,
-                                        product.price,
-                                        -1
-                                      )
-                                    }
-                                  >
-                                    <FaMinusCircle />
-                                  </button>
-                                  <span style={{ margin: "0 .4rem" }}>
-                                    {productsToSend.find(
+                    <div key={index} className="category-container">
+                      {filteredProducts[category]
+                        .sort((a, b) => a.price - b.price) // Sort products by price in ascending order
+                        .map((product, idx) => {
+                           const quantity =
+      productsToSend.find(
+        (prod) =>
+          prod.name === product.name && prod.price === product.price
+      )?.quantity || 0;
+      return (
+                          <div
+                            key={idx}
+                            className={`main-box ${quantity > 0 ? "highlighted" : ""}`}
+                            onClick={() => handleOpenPopup(product)}
+                          >
+                            <div className="sub-box">
+                              <h4 className="p-name">
+                                {product.name}
+                                {product.varieties &&
+                                Array.isArray(product.varieties) &&
+                                product.varieties[0]?.size
+                                  ? ` (${product.varieties[0].size})`
+                                  : ""}
+                              </h4>
+                              <p className="p-name-price">
+                                Rs.{" "}
+                                {product.price
+                                  ? product.price.toFixed(2) // Use product price if it exists
+                                  : product.varieties.length > 0
+                                  ? product.varieties[0].price.toFixed(2) // Fallback to first variety price
+                                  : "N/A"}{" "}
+                              </p>
+                                 {(productsToSend.find(
+                              (prod) =>
+                                prod.name === product.name &&
+                                prod.price === product.price
+                            )?.quantity || 0) > 0 && (
+                              <span className="quantity-badge">
+                                <span>
+                                  <FaShoppingCart />
+                                  {
+                                    productsToSend.find(
                                       (prod) =>
                                         prod.name === product.name &&
                                         prod.price === product.price
-                                    )?.quantity || 1}
-                                  </span>
-                                  <button
-                                    className="icons"
-                                    onClick={() =>
-                                      handleQuantityChange(
-                                        product.name,
-                                        product.price,
-                                        1
-                                      )
-                                    }
-                                  >
-                                    <FaPlusCircle />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="btn-box">
-                                  <button
-                                    onClick={() => handleOpenPopup(product)}
-                                    className="add-btn"
-                                  >
-                                    Add
-                                  </button>
-                                  {product.varieties?.length > 0 && (
-                                    <span className="customise-text">
-                                      Customise
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                                    )?.quantity
+                                  }
+                                </span>
+                              </span>
+                            )}
                             </div>
+                         
                           </div>
-                        </>
-                      ))}
+                        )})}
+                    </div>
                   </div>
                 ))
             ) : (
@@ -772,9 +699,6 @@ const Invoice = () => {
                     <div style={{ width: "10%", textAlign: "center" }}>
                       <span>Qty</span>
                     </div>
-                    <div style={{ width: "7%", textAlign: "center" }}>
-                      <span>x</span>
-                    </div>
                     <div style={{ width: "15%", textAlign: "right" }}>
                       <span>Price</span>
                     </div>
@@ -793,12 +717,35 @@ const Invoice = () => {
                       <div style={{ width: "50%" }}>
                         <span>{product.name}</span>
                       </div>
-                      <div style={{ width: "10%", textAlign: "center" }}>
-                        <span>{product.quantity}</span>
-                      </div>{" "}
-                      <div style={{ width: "7%", textAlign: "center" }}>
-                        <span>x</span>
-                      </div>{" "}
+                      <div className="quantity-btns">
+                        <button
+                          className="icons"
+                          onClick={() =>
+                            handleQuantityChange(
+                              product.name,
+                              product.price,
+                              -1
+                            )
+                          }
+                        >
+                          <FaMinusCircle />
+                        </button>
+                        <span style={{ margin: "0 .4rem" }}>
+                          {productsToSend.find(
+                            (prod) =>
+                              prod.name === product.name &&
+                              prod.price === product.price
+                          )?.quantity || 1}
+                        </span>
+                        <button
+                          className="icons"
+                          onClick={() =>
+                            handleQuantityChange(product.name, product.price, 1)
+                          }
+                        >
+                          <FaPlusCircle />
+                        </button>
+                      </div>
                       <div style={{ width: "15%", textAlign: "right" }}>
                         <span>{product.price * product.quantity}</span>
                       </div>
@@ -837,8 +784,7 @@ const Invoice = () => {
                   </li>
                   {/* <div style={{ textAlign: "center" }}>{dash}</div> */}
                   <hr className="hr" />
-                  <hr className="hr" style={{marginBottom: "3rem"}}/>
-
+                  <hr className="hr" style={{ marginBottom: "3rem" }} />
                 </ul>
                 <div className="order-type">
                   {["delivery", "dine-in"].map((type) => (
@@ -870,92 +816,6 @@ const Invoice = () => {
           <p className="no-products">No products found </p>
         )}
       </div>
-      <div className="invoice-btn">
-        <button onClick={guardAddProduct} className="invoice-kot-btn">
-          <h2> + PRODUCT </h2>
-        </button>
-
-        <button
-          onClick={() => openBillsModal("delivery")}
-          className="invoice-next-btn"
-        >
-          <h2>Delivery Bills ({deliveryBills.length})</h2>
-        </button>
-
-        <button
-          onClick={() => openBillsModal("dine-in")}
-          className="invoice-next-btn"
-        >
-          <h2>Dine-In Bills ({dineInBills.length})</h2>
-        </button>
-      </div>
-      {showKotModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>{modalType === "delivery" ? "Delivery" : "Dine-In"} Bills</h3>
-            <button
-              className="close-btn"
-              onClick={() => setShowKotModal(false)}
-            >
-              <IoClose />
-            </button>
-            <div className="kot-list">
-              {(modalType === "delivery" ? deliveryBills : dineInBills)
-                .length === 0 && <p>No bills found.</p>}
-              {(modalType === "delivery" ? deliveryBills : dineInBills).map(
-                (order, idx) => {
-                  const remaining =
-                    2 * 60 * 60 * 1000 - (now - order.timestamp);
-                  return (
-                    <div key={idx} className="kot-entry">
-                      <h4 className="kot-timer">
-                        Bill Expire in <span>{formatRemaining(remaining)}</span>
-                      </h4>
-                      <h4>
-                        KOT #{idx + 1}
-                        <span className="kot-date">{order.date}</span>
-                      </h4>
-                      <ul>
-                        {order.items.map((item, i) => (
-                          <>
-                            <li key={i} className="kot-product-item">
-                              <span>
-                                {item.name} x {item.quantity}
-                              </span>
-                              <span>
-                                ₹{(item.price * item.quantity).toFixed(2)}
-                              </span>
-                            </li>
-                          </>
-                        ))}
-                      </ul>
-                      <div className="kot-entry-actions">
-                        <FaTrash
-                          className="del-action-icon action-icon"
-                          size={20}
-                          onClick={() => deleteKot(idx)}
-                        />
-                        <FaEdit
-                          className="edit-action-icon action-icon"
-                          size={20}
-                          onClick={() => editKot(order.items, idx)}
-                        />
-                        <FaFileInvoice
-                          className="invoice-action-icon action-icon"
-                          size={20}
-                          onClick={() =>
-                            handleCreateInvoice(order.items, modalType)
-                          }
-                        />
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       {showPopup && currentProduct && currentProduct.varieties?.length > 0 && (
         <div className="popup-overlay">
           <div className="popup-contentt">

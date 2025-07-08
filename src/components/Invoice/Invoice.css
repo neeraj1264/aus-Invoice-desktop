@@ -83,7 +83,7 @@
   font-weight: 600;
   margin-bottom: 0;
   padding: 15px 15px 0;
-
+  text-align: center;
 }
 
 .category-bar {
@@ -108,7 +108,7 @@
 }
 
 .category-bar button {
-  margin: 0.3rem .6rem;
+  margin: 0.3rem 0.6rem;
   font-size: 1.2rem;
   font-weight: 700;
   text-align: left;
@@ -136,20 +136,25 @@
   padding: 4rem 0;
 }
 .category-container {
-  border-radius: 10px;
-  background-color: #fff;
   background-clip: border-box;
-  border: 1px solid rgba(0, 0, 0, 0.125);
   margin: 1rem;
-  box-shadow: 1px 6px 6px 3px grey;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+  gap: 1rem;
 }
 .main-box {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   /* border-bottom: 1px solid grey; */
   margin: 0.3rem;
+  border-radius: 10px;
+  background-color: #dfdfdb;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  box-shadow: 1px 6px 6px 3px grey;
 }
-
+.highlighted {
+  background-color: #e6ffe6; /* Light green or any color you like */
+}
 .invoice-container {
   display: flex;
   width: 100%;
@@ -166,7 +171,7 @@
   width: 40%;
   padding: 10px;
 }
-.sample-section{
+.sample-section {
   width: 30%;
   padding: 10px 0 8rem;
   position: fixed;
@@ -190,11 +195,11 @@
 .sub-box {
   display: flex;
   flex-direction: column;
-  width: 55vw;
   overflow: hidden;
   text-overflow: ellipsis;
   word-wrap: break-word;
-  padding-left: .7rem;
+  padding: .7rem .2rem;
+  text-align: center;
 }
 
 .p-name {
@@ -205,11 +210,11 @@
   line-height: 30px;
   font-weight: 600;
 }
-.p-name-price{
+.p-name-price {
   font-weight: 600;
   font-size: 17px;
   line-height: 25.5px;
-  color: var(--bg)
+  color: var(--bg);
 }
 .sub-box h3 {
   margin: 0;
@@ -279,7 +284,7 @@
   width: calc(100%);
   background: transparent;
   z-index: 2;
-  gap: 0.1rem;  
+  gap: 0.1rem;
 }
 
 .invoice-btn button {
@@ -292,7 +297,7 @@
   color: white;
   padding: 12px 24px;
   /* border: none; */
-  border-radius: 1rem 1rem 0 0 ;
+  border-radius: 1rem 1rem 0 0;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -314,14 +319,14 @@
   color: white;
 }
 
-.invoice-kot-btn{
+.invoice-kot-btn {
   color: white;
   padding: 10px;
   font-size: 1rem;
   background: white;
   border-radius: 1rem 1rem 0 0;
 }
-.invoice-kot-btn h2{
+.invoice-kot-btn h2 {
   margin: auto;
   font-size: 1.2rem;
   color: var(--bg);
@@ -452,8 +457,8 @@ h3 {
 }
 
 input[type="checkbox"] {
-    accent-color: var(--bg); /* Set your desired color */
-  }
+  accent-color: var(--bg); /* Set your desired color */
+}
 
 .save-btn {
   display: block;
@@ -482,9 +487,6 @@ input[type="checkbox"] {
   font-weight: 700;
 }
 
-
-
-
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
@@ -498,7 +500,7 @@ input[type="checkbox"] {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Modal Content */
@@ -520,8 +522,14 @@ input[type="checkbox"] {
 
 /* Animation */
 @keyframes fadeIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Close Button */
@@ -619,7 +627,7 @@ input[type="checkbox"] {
   color: #3498db;
 }
 
-.kot-timer span{
+.kot-timer span {
   color: red;
 }
 
@@ -627,16 +635,13 @@ input[type="checkbox"] {
 .category-btn.non-veg {
   background-color: #c0646d;
   color: white;
-  border: 1px solid #ffcdd2; 
+  border: 1px solid #ffcdd2;
 }
 
 .category-btn.non-veg.active {
-  background-color: #ff0026; 
+  background-color: #ff0026;
   font-weight: bold;
 }
-
-
-
 
 .order-type {
   display: flex;
@@ -667,7 +672,7 @@ input[type="checkbox"] {
   color: #ed6629;
   font-weight: 600;
   transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .order-option span::before {
@@ -702,7 +707,7 @@ input[type="checkbox"] {
   background: linear-gradient(135deg, #ed6629, #ff8a55);
   border-color: #ed6629;
   color: #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   padding-right: 2rem;
 }
 
@@ -717,12 +722,12 @@ input[type="checkbox"] {
   opacity: 1;
 }
 
-.kot-btn{
+.kot-btn {
   background-color: var(--bg); /* or your brand color */
   color: white;
   padding: 12px 24px;
   /* border: none; */
-  border-radius: 1rem 1rem 0 0 ;
+  border-radius: 1rem 1rem 0 0;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -736,4 +741,28 @@ input[type="checkbox"] {
   font-weight: bold;
   letter-spacing: 0.5px;
   color: white;
+}
+
+
+
+
+.quantity-badge {
+  display: flex;
+  justify-content: end;
+}
+.quantity-badge span {
+  position: relative;
+  bottom: 0;
+  right: 0;
+  background-color: #ff6600;
+  color: #fff;
+  width: 30px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-weight: bold;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
