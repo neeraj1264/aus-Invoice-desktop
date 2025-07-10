@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import "./Header.css";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useOnlineStatus } from "../../useOnlineStatus";
+// import { useOnlineStatus } from "../../useOnlineStatus";
 
 const Header = ({ headerName, setSearch, onClick }) => {
   const [isSearchVisible, setIsSearchVisible] = useState(false); // Track visibility of search input
@@ -11,8 +11,7 @@ const Header = ({ headerName, setSearch, onClick }) => {
   const handleSearchChange = (event) => {
     setSearch(event.target.value); // Update search state
   };
-  const { isOnline, checkBackend } = useOnlineStatus();
-  const [isChecking, setIsChecking] = useState(false);
+
   const toggleSearch = () => {
     setIsSearchVisible((prev) => !prev); // Toggle visibility
   };
@@ -29,53 +28,6 @@ const Header = ({ headerName, setSearch, onClick }) => {
     }
   };
 
-  const guardAddProduct = async (e) => {
-    e.preventDefault();
-    if (isChecking) return;
-    setIsChecking(true);
-
-    // Get fresh status on click
-    const currentStatus = await checkBackend();
-
-    if (currentStatus) {
-      navigate("/NewProduct");
-    } else {
-      alert("You’re offline—cannot add a new product right now.");
-    }
-    setIsChecking(false);
-  };
-
-  const guardOrderReport = async (e) => {
-    e.preventDefault();
-    if (isChecking) return;
-    setIsChecking(true);
-
-    // Get fresh status on click
-    const currentStatus = await checkBackend();
-
-    if (currentStatus) {
-      navigate("/report");
-    } else {
-      alert("You’re offline—cannot see the order report.");
-    }
-    setIsChecking(false);
-  };
-
-  const guardcustomerdata = async (e) => {
-    e.preventDefault();
-    if (isChecking) return;
-    setIsChecking(true);
-
-    // Get fresh status on click
-    const currentStatus = await checkBackend();
-
-    if (currentStatus) {
-      navigate("/customer-data");
-    } else {
-      alert("You’re offline—cannot see the customer data.");
-    }
-    setIsChecking(false);
-  };
 
   return (
     <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
@@ -137,7 +89,6 @@ const Header = ({ headerName, setSearch, onClick }) => {
                     : "nav-link custom-text"
                 }
                 to="/NewProduct"
-                onClick={guardAddProduct}
               >
                 Add Product
               </NavLink>
@@ -162,7 +113,6 @@ const Header = ({ headerName, setSearch, onClick }) => {
                     : "nav-link custom-text"
                 }
                 to="/report"
-                onClick={guardOrderReport}
               >
                 Order Report
               </NavLink>
@@ -175,7 +125,6 @@ const Header = ({ headerName, setSearch, onClick }) => {
                     : "nav-link custom-text"
                 }
                 to="/customer-data"
-                onClick={guardcustomerdata}
               >
                 Customer Data
               </NavLink>

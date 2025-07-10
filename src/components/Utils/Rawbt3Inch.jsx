@@ -105,25 +105,15 @@ export default function Rawbt3Inch({
   const itemTotal = calculateTotalPrice(productsToSend);
   const gstAmount = includeGST ? +(itemTotal * 0.05).toFixed(2) : 0;
 
-  const invoiceText = `
-\x1B\x61\x01\x1D\x21\x33Pizza Italia\x1D\x21\x00
-\x1B\x61\x01\x1D\x21\x10OPP. BAJAJ BIKE AGENCY\x1B\x21\x00
-\x1B\x61\x01\x1D\x21\x10KAITHAL ROAD PEHOWA\x1B\x21\x00
-\x1B\x61\x01\x1D\x21\x10 7222006000 9992271872\x1B\x21\x00    
-\x1B\x61\x01\x1D\x21\x10 GstNo:06QTIPS7467A1Z1\x1B\x21\x00\x1B\x61\x00
-  \x1B\x21\x30---Invoice Details---\x1B\x21\x00
-  \x1B\x21\x20${formattedDate} ${formattedTime}\x1B\x21\x00
-\x1B\x21\x20 Bill No: #${Math.floor(1000 + Math.random() * 9000)}\x1B\x21\x00
-${
-  [customerName, customerPhone, customerAddress]
-    .map((value, index) => {
-      if (!value) return "";
-      const label = ["Name   :", "Phone  :", "Address:"][index];
-      return `\x1B\x21\x20 ${label} ${value}\x1B\x21\x00`;
-    })
-    .filter(Boolean)
-    .join("\n")
-}
+  const invoiceText = 
+`\x1B\x61\x01\x1D\x21\x23Pizza Italia\x1D\x21\x00
+\x1B\x61\x01\x1D\x11\x10OPP. BAJAJ BIKE AGENCY\x1B\x11\x00
+\x1B\x61\x01\x1D\x11\x10KAITHAL ROAD PEHOWA\x1B\x11\x00
+   \x1B\x61\x01\x1D\x11\x10 7222006000 9992271872\x1B\x11\x00    
+\x1B\x61\x01\x1D\x11\x10 GstNo:06QTIPS7467A1Z1\x1B\x11\x00
+        \x1B\x61\x01\x1B\x21\x10---------Invoice Details---------\x1B\x21\x00\x1B\x61\x00
+\x1D\x11\x10 ${formattedDate} ${formattedTime}\x1D\x11\x00
+\x1D\x11\x10 Bill No: #${Math.floor(1000 + Math.random() * 9000)}\x1D\x11\x00
 ${detailedItems}
   ${[
   includeGST && `Item Total:                             ${totalprice} `,

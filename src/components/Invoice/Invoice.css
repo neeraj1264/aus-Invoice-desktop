@@ -139,7 +139,7 @@
   background-clip: border-box;
   margin: 1rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(22%, 1fr));
   gap: 1rem;
 }
 .main-box {
@@ -165,10 +165,11 @@
 .category-barr {
   /* padding: 10px; */
   border-right: 1px solid #ddd;
+  position: absolute;
 }
 
 .main-section {
-  width: 40%;
+  width: 70%;
   padding: 10px;
 }
 .sample-section {
@@ -249,7 +250,7 @@
 .quantity-btns {
   /* margin-top: 1rem; */
   font-weight: 800;
-  width: 24vw;
+  width: 25%;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -20,7 +20,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { IoClose } from "react-icons/io5";
 import { getAll, saveItems } from "../../DB";
-import { useOnlineStatus } from "../../useOnlineStatus";
 import Rawbt3Inch from "../Utils/Rawbt3Inch";
 
 const toastOptions = {
@@ -43,7 +42,6 @@ const Invoice = () => {
   const [activeCategory, setActiveCategory] = useState("");
   const [includeGST, setIncludeGST] = useState(true);
 
-  const { isOnline, checkBackend } = useOnlineStatus();
   const [isChecking, setIsChecking] = useState(false);
 
   // default to “delivery”
@@ -71,21 +69,6 @@ const Invoice = () => {
 
   const navigate = useNavigate(); // For navigation
 
-  const guardAddProduct = async (e) => {
-    e.preventDefault();
-    if (isChecking) return;
-    setIsChecking(true);
-
-    // Get fresh status on click
-    const currentStatus = await checkBackend();
-
-    if (currentStatus) {
-      navigate("/NewProduct");
-    } else {
-      alert("You’re offline—cannot add a new product right now.");
-    }
-    setIsChecking(false);
-  };
   // Update `now` every second for countdown
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -457,6 +440,7 @@ const Invoice = () => {
   };
 
   const handleCategoryClick = (category) => {
+    setIsCategoryVisible((prev) => !prev);
     const categoryElement = document.getElementById(category);
     if (categoryElement) {
       // Calculate the offset position (7rem margin)
@@ -470,7 +454,6 @@ const Invoice = () => {
         behavior: "smooth",
       });
     }
-    setIsCategoryVisible((prev) => !prev);
 
     setActiveCategory(category);
   };
@@ -544,44 +527,26 @@ const Invoice = () => {
     win.close();
   };
 
-  const handleCreateInvoice = (orderItems, type) => {
-    // save the items and the order type
-    localStorage.setItem("productsToSend", JSON.stringify(orderItems));
-    localStorage.setItem("orderType", type);
-    // also pass via react-router state (optional, but nice)
-    navigate("/customer-detail", { state: { orderType: type } });
-    setShowKotModal(false);
-  };
+  // define whatever cats you really want up top:
+  const priority = [
+    "Pizza veg1",
+    "Pizza veg2",
+    "Pizza veg3",
+    "Pizza veg4",
+    "Pizza veg5",
+  ];
 
-  const deleteKot = (idx) => {
-    if (modalType === "delivery") {
-      const updated = deliveryBills.filter((_, i) => i !== idx);
-      setDeliveryBills(updated);
-      localStorage.setItem("deliveryKotData", JSON.stringify(updated));
-    } else {
-      const updated = dineInBills.filter((_, i) => i !== idx);
-      setDineInBills(updated);
-      localStorage.setItem("dineInKotData", JSON.stringify(updated));
-    }
-  };
+  // grab all your raw keys:
+  const rawCats = Object.keys(filteredProducts);
 
-  const editKot = (order, idx) => {
-    // Remove from the correct list
-    if (modalType === "delivery") {
-      const updated = deliveryBills.filter((_, i) => i !== idx);
-      setDeliveryBills(updated);
-      localStorage.setItem("deliveryKotData", JSON.stringify(updated));
-    } else {
-      const updated = dineInBills.filter((_, i) => i !== idx);
-      setDineInBills(updated);
-      localStorage.setItem("dineInKotData", JSON.stringify(updated));
-    }
+  // split them into two groups:
+  const topCats = priority.filter((cat) => rawCats.includes(cat));
+  const otherCats = rawCats
+    .filter((cat) => !priority.includes(cat))
+    .sort((a, b) => a.localeCompare(b));
 
-    // Load into current products
-    setProductsToSend(order);
-    localStorage.setItem("productsToSend", JSON.stringify(order));
-    setShowKotModal(false);
-  };
+  // final array drives **everything**:
+  const categoriess = [...topCats, ...otherCats];
 
   return (
     <div>
@@ -592,25 +557,25 @@ const Invoice = () => {
         onClick={toggleCategoryVisibility}
       />
       <div className="invoice-container">
-        <div className="category-barr">
-          <div className="category-b">
-            <div className="category-bar">
-              {Object.keys(filteredProducts)
-                .sort((a, b) => a.localeCompare(b))
-                .map((category, index) => (
+        {isCategoryVisible && (
+          <div className="category-barr">
+            <div className="category-b">
+              <div className="category-bar">
+                {categoriess.map((cat) => (
                   <button
-                    key={index}
-                    className={`category-btn 
-                      ${activeCategory === category ? "active" : ""}
-                    `}
-                    onClick={() => handleCategoryClick(category)} // Trigger scroll to category
+                    key={cat}
+                    className={`category-btn ${
+                      activeCategory === cat ? "active" : ""
+                    }`}
+                    onClick={() => handleCategoryClick(cat)}
                   >
-                    {category}
+                    {cat}
                   </button>
                 ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
         <div className="main-section">
           <div className="main">
             {loading ? (
@@ -619,15 +584,14 @@ const Invoice = () => {
                 <div></div>
                 <div></div>
               </div>
-            ) : Object.keys(filteredProducts).length > 0 ? (
-              Object.keys(filteredProducts)
-                .sort((a, b) => a.localeCompare(b)) // Sort category names alphabetically
-                .map((category, index) => (
-                  <div key={index} className="category-block">
+            ) : categoriess.length > 0 ? (
+              categoriess.map((category) => (
+                  <div key={category} className="category-block">
                     <h2 className="category" id={category}>
                       {category}
                     </h2>
-                    <div key={index} className="category-container">
+
+                    <div key={category} className="category-container">
                       {filteredProducts[category]
                         .sort((a, b) => a.price - b.price) // Sort products by price in ascending order
                         .map((product, idx) => {
@@ -694,7 +658,7 @@ const Invoice = () => {
           </div>
         </div>
 
-        {productsToSend.length > 0 ? (
+        {productsToSend.length > 0 && (
           <div className="sample-section">
             <div className="check-container">
               <>
@@ -704,10 +668,10 @@ const Invoice = () => {
                     <div style={{ width: "10%" }}>
                       <span>No.</span>
                     </div>
-                    <div style={{ width: "50%", textAlign: "center" }}>
+                    <div style={{ width: "50%", textAlign: "left" }}>
                       <span>Name</span>
                     </div>
-                    <div style={{ width: "10%", textAlign: "center" }}>
+                    <div style={{ width: "25%", textAlign: "center" }}>
                       <span>Qty</span>
                     </div>
                     <div style={{ width: "15%", textAlign: "right" }}>
@@ -804,7 +768,9 @@ const Invoice = () => {
                     checked={includeGST}
                     onChange={(e) => setIncludeGST(e.target.checked)}
                   />
-                  <label>Include GST (5%)</label>
+                  <label style={{ marginLeft: ".5rem" }}>
+                    Include GST (5%)
+                  </label>
                 </div>
 
                 <Rawbt3Inch
@@ -822,8 +788,6 @@ const Invoice = () => {
               </>
             </div>
           </div>
-        ) : (
-          <p className="no-products">No products found </p>
         )}
       </div>
       {showPopup && currentProduct && currentProduct.varieties?.length > 0 && (

@@ -208,7 +208,7 @@ const History = () => {
             className="sync-container"
             style={{ position: "absolute", right: "1rem" }}
           >
-            <button
+            {/* <button
               onClick={syncOfflineOrders}
               disabled={syncing}
               style={{
@@ -222,7 +222,7 @@ const History = () => {
               }}
             >
               {syncing ? "Syncing…" : "Sync Offline Orders"}
-            </button>
+            </button> */}
           </div>
 
           <div className="history-container">
